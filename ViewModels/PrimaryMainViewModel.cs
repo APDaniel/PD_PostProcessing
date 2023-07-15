@@ -89,11 +89,18 @@ namespace PD_ScriptTemplate.ViewModels
             set { _selectedStructureListViewItem = value; ShowInfoForTheSelectedStructureModel(); }
         }
 
-
+        /// <summary>
+        /// //This is the source for the ListView. When the collection of populated structure changes, 
+        /// it calls one metod to update ListViewItems
+        /// </summary>
         public IEnumerable structuresIEnumerable
         {
             get { return _structureViewModelCollection; }
-            set => _structureViewModelCollection = (ObservableCollection<StructureViewModel>)value;
+            set
+            {
+                _structureViewModelCollection = (ObservableCollection<StructureViewModel>)value;
+                updateListViewItemsBySelectedStructureIDsInComboBoxes();
+            }
         } //We use this one for binding with the view model
         public IEnumerable structureIDsIEnumerable => _structureIDsCollection.OrderBy(i => i);//We use this one for binding with the view model
          
@@ -384,6 +391,8 @@ namespace PD_ScriptTemplate.ViewModels
             GetAllStructureIDsFromStructureSet();
             
         }
+
+
         /// <summary>
         /// Method updates values binded to TextBlocks that represent structure ID and SolidColorBrush for foreground of this text block
         /// </summary>
@@ -542,8 +551,64 @@ namespace PD_ScriptTemplate.ViewModels
 
 
         ///<summary>
-        ///Method to update selected ListViewItem when ComboboxSelection Changed
+        ///Method to update selected ListViewItem when ComboboxSelectedItem Changes
         /// </summary>
         #endregion
+        private async void updateListViewItemsBySelectedStructureIDsInComboBoxes()
+        {
+            _workIsInProgress = true;
+            try
+            {
+                Logger.LogInfo("Called method to update ListViewItems in accordance with the selected structure IDs in the comboBoxes");
+                //Get all structures for the structure set from context and add them into the StructureViewModel collection of StructureModels
+                await esapiWorker.AsyncRunStructureContext((_patient, _structureSet) =>
+                {
+                    Logger.LogInfo("   Run through structures in the structure set taken from context and take desired data");
+                   
+                    foreach (var listViewItemToUpdate in _structureViewModelCollection)
+                    {
+                        var selectedStructureFromEclipse = _structureSet.Structures.FirstOrDefault
+                        (x => string.Equals(x.Id, listViewItemToUpdate.StructureID, StringComparison.OrdinalIgnoreCase));
+
+                        if (selectedStructureFromEclipse != null)
+                        {
+                            #region private variables to be used in AsyncRunStructureContext
+                            string _selectedStructureFromEclipseDICOMtype = selectedStructureFromEclipse.DicomType;
+                            Color _selectedStructureFromEclipseColor = selectedStructureFromEclipse.Color;
+                            bool _selectedStructureFromEclipseIsHighResolution = selectedStructureFromEclipse.IsHighResolution;
+                            double _selectedStructureFromEclipseVolume = selectedStructureFromEclipse.Volume;
+                            #endregion
+
+                            //Invoke dispatcher to enable collection updates from a different thread
+                            userInterface.Invoke(() =>
+                            {
+                                listViewItemToUpdate.StructureLabel = _selectedStructureFromEclipseDICOMtype;
+                                listViewItemToUpdate.StructureColor = new SolidColorBrush(_selectedStructureFromEclipseColor);
+                                listViewItemToUpdate.IsHighResolution = _selectedStructureFromEclipseIsHighResolution;
+                                listViewItemToUpdate.StructureVolume = _selectedStructureFromEclipseVolume;
+                            });
+                        }
+                        else 
+                        {
+                            Logger.LogWarning("");
+                            Logger.LogWarning(String.Format
+                                ("   Structure with id: {0} has not been fount in the structureSet", selectedStructureFromEclipse.Id));
+                            Logger.LogWarning("");
+                        }
+                    }
+                    //Sort structures in the list by their ID
+                    Logger.LogInfo("ListViewItems have been updated in accordance with the selected structure IDs in the comboBoxes");
+                });
+
+            }
+            catch (Exception exception)
+            {
+                //Log any appeared issues
+                Logger.LogError(string.Format("{0}\r\n{1}\r\n{2}", exception.Message, exception.InnerException, exception.StackTrace));
+                MessageBox.Show(string.Format("{0}\r\n{1}\r\n{2}", exception.Message, exception.InnerException, exception.StackTrace));
+            }
+            _workIsInProgress = false;
+            GetAllStructureIDsFromStructureSet();
+        }
     }
 }
