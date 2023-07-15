@@ -3,18 +3,18 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 
-namespace OptiStructures.Converter
+namespace PD_ScriptTemplate.Converter
 {
-    public class BooleanToVisibilityConverter : IValueConverter
+    public class InverseBoolToVisibilityConverter:IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is bool boolValue && boolValue)
             {
-                return Visibility.Visible;
+                return Visibility.Collapsed;
             }
 
-            return Visibility.Collapsed;
+            return Visibility.Visible;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -22,5 +22,4 @@ namespace OptiStructures.Converter
             throw new NotImplementedException();
         }
     }
-
 }

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace OptiStructures.Helpers
+namespace OptiStructures.Converter
 {
     public class BrushConverter : IValueConverter
     {

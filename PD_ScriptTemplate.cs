@@ -42,6 +42,9 @@ namespace VMS.TPS
         {
             var mainViewModel = new MainViewModel(esapiWorker); 
             Logger.LogInfo("MainViewModel set");
+
+            //Instead of hooking DataContext to one specific ViewModel, we use a MainViewModel which allows navigation between different View Models.
+            //It can be useful for projects with several Views as the navigation layer is required
             var mainWindow = new ScriptWindow() { DataContext=mainViewModel}; 
             mainWindow.ShowDialog(); 
             

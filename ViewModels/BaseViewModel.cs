@@ -1,9 +1,5 @@
 ﻿using PropertyChanged;
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
 
 namespace PD_ScriptTemplate.ViewModels
 {
@@ -14,6 +10,10 @@ namespace PD_ScriptTemplate.ViewModels
     public  class BaseViewModel : INotifyPropertyChanged  
     {
         public event PropertyChangedEventHandler PropertyChanged = (sender, e) => { };
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
     
 }

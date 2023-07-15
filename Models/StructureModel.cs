@@ -9,9 +9,10 @@ namespace PD_ScriptTemplate.Models
         public string StructureLabel { get; set; }
         public SolidColorBrush StructureColor { get; set; }
         public Boolean IsHighResolution { get; set; }
+        public Boolean InverseIsHighResolution { get; set; }
         public Boolean IsEmptyStructure { get; set; }
         public Boolean InverseIsEmptyStructure { get; set; }
-        public string StructureVolume { get; set; }
+        public double StructureVolume { get; set; }
         public StructureModel(string structureID, string structureDICOMtype, 
             Color structureColor, bool structureIsHighResolution, double structureVolume)
         {
@@ -21,7 +22,7 @@ namespace PD_ScriptTemplate.Models
             IsHighResolution = structureIsHighResolution; //bool
             IsEmptyStructure = structureVolume < 0.1 ? true : false; //bool
             InverseIsEmptyStructure = structureVolume < 0.1 ? false : true; //bool 
-            StructureVolume = Math.Round(structureVolume, 2).ToString() + "cc"; //double
+            StructureVolume = Math.Round(structureVolume, 2); //double
 
         }
     }
