@@ -9,7 +9,8 @@
              xmlns:fa="http://schemas.fontawesome.io/icons/"
              xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
              xmlns:cmd="http://www.galasoft.ch/mvvmlight" 
-             xmlns:local1="clr-namespace:PD_ScriptTemplate.Helpers">
+             xmlns:local1="clr-namespace:PD_ScriptTemplate.Helpers" 
+             xmlns:converter1="clr-namespace:PD_ScriptTemplate.Converter">
 
     <UserControl.Resources>
         <SolidColorBrush x:Key="BorderPrimary" Color="#1c1c1c"/>
@@ -66,7 +67,6 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
-
         <Style x:Key="GenericTextBlock" TargetType="TextBlock">
             <Style.Setters>
                 <Setter Property="Padding" Value="10 0 0 0"/>
@@ -77,69 +77,134 @@
                 <Setter Property="VerticalAlignment" Value="Center"/>
                 <Setter Property="HorizontalAlignment" Value="Center"/>
                 <Setter Property="TextAlignment" Value="Center"/>
-
-                <!--<Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="TextBlock">
-                            <Border Background="{TemplateBinding Background}" 
-                                    Padding="{TemplateBinding Padding}" 
-                                    Margin="{TemplateBinding Margin}" 
-                                    CornerRadius="10">
-                                <ContentControl HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-                                                VerticalAlignment="Center"
-                                                HorizontalAlignment="Center"/>
-                            </Border>
-
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>-->
             </Style.Setters>
         </Style>
         <Style x:Key="GenericTextBox" TargetType="TextBox">
-            <Style.Setters>
-                <Setter Property="Padding" Value="20 8"/>
-                <Setter Property="FontFamily" Value="Calibri"/>
-                <Setter Property="FontSize" Value="38"/>
-                <Setter Property="Foreground" Value="Black"/>
-                <Setter Property="Background" Value="#d4d4d4"/>
-                <Setter Property="VerticalAlignment" Value="Stretch"/>
-                <Setter Property="HorizontalAlignment" Value="Stretch"/>
-                <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                <Setter Property="VerticalContentAlignment" Value="Center"/>
-                <Setter Property="TextAlignment" Value="Center"/>
-                <Setter Property="BorderThickness" Value="2"/>
-                <Setter Property="BorderBrush" Value="Black"/>
-                <Setter Property="Margin" Value="1"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="TextBox">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontFamily" Value="Calibri"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="Background" Value="#F2F2F2"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#CCCCCC"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Grid>
+                            <Border x:Name="Border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="3"/>
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                  Margin="0,0,0,0"
+                                  Background="Transparent"
+                                  HorizontalAlignment="Stretch"
+                                  VerticalAlignment="Center"
+                                  IsTabStop="False"
+                                  Padding="{TemplateBinding Padding}"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Border" Property="Background" Value="#F2F2F2"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#CCCCCC"/>
+                                <Setter Property="Foreground" Value="#888888"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#E6E6E6"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#999999"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#FFFFFF"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#333333"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="GenericComboBox" TargetType="ComboBox">
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Width" Value="Auto"/>
+            <Setter Property="Height" Value="Auto"/>
+            <Setter Property="Padding" Value="20 8"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
                             <Border Background="{TemplateBinding Background}" 
                                     Padding="{TemplateBinding Padding}" 
                                     Margin="{TemplateBinding Margin}" 
-                                    CornerRadius="10">
-                                <ContentControl HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                    CornerRadius="20">
+                                <ContentControl 
+                                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
                                                 VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
                                                 VerticalAlignment="Center"
                                                 HorizontalAlignment="Center"/>
                             </Border>
+                            <ToggleButton x:Name="ToggleButton"
+                                  BorderBrush="{TemplateBinding BorderBrush}"
+                                  Background="{TemplateBinding Background}"
+                                  Padding="6,2"
+                                  Foreground="{TemplateBinding Foreground}"
+                                  HorizontalContentAlignment="Stretch"
+                                  VerticalContentAlignment="Center"
+                                  IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                  ClickMode="Press">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <ContentPresenter x:Name="ContentPresenter"
+                                              Margin="4,0"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                              IsHitTestVisible="False" />
+                                    <Path x:Name="Arrow"
+                                  Grid.Column="1"
+                                  HorizontalAlignment="Right"
+                                  VerticalAlignment="Center"
+                                  Data="M0,0 L0,2 L4,6 L8,2 L8,0 L4,4 z"
+                                  Fill="{TemplateBinding Foreground}" />
+                                </Grid>
+                            </ToggleButton>
 
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style.Setters>
-        </Style>
-        <Style x:Key="GenericComboBox" TargetType="ComboBox">
-            <Style.Setters>
-                <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                <Setter Property="VerticalContentAlignment" Value="Center"/>
-                <Setter Property="Width" Value="Auto"/>
-                <Setter Property="Height" Value="Auto"/>
-                <Setter Property="HorizontalAlignment" Value="Stretch"/>
-                <Setter Property="VerticalAlignment" Value="Stretch"/>
-                <Setter Property="Padding" Value="20 8"/>
-                <Setter Property="FontSize" Value="16"/>
-            </Style.Setters>
+                            <Popup x:Name="Popup"
+                           Placement="Bottom"
+                           IsOpen="{TemplateBinding IsDropDownOpen}"
+                           AllowsTransparency="True"
+                           Focusable="False"
+                           PopupAnimation="Slide">
+                                <Grid x:Name="DropDown"
+                              SnapsToDevicePixels="True"
+                              MinWidth="{TemplateBinding ActualWidth}"
+                              MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                    <Border x:Name="DropDownBorder"
+                                    Background="#FFFFFF"
+                                    BorderThickness="1"
+                                    BorderBrush="#888888" />
+                                    <ScrollViewer Margin="4" SnapsToDevicePixels="True">
+                                        <ItemsPresenter />
+                                    </ScrollViewer>
+                                </Grid>
+                            </Popup>
+                        </Grid>
+                        
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
         <Style x:Key="GenericLabel" TargetType="Label">
             <Style.Setters>
@@ -174,19 +239,6 @@
                 <Setter Property="VerticalAlignment" Value="Center"/>
                 <Setter Property="HorizontalAlignment" Value="Stretch"/>
                 <Setter Property="TextAlignment" Value="Center"/>
-            </Style.Setters>
-        </Style>
-        <Style x:Key="ListViewItemCombobox" TargetType="ComboBox">
-            <Style.Setters>
-                <Setter Property="Padding" Value="20 8"/>
-                <Setter Property="FontFamily" Value="Calibri"/>
-                <Setter Property="FontSize" Value="38"/>
-                <Setter Property="Foreground" Value="Black"/>
-                <Setter Property="Background" Value="WhiteSmoke"/>
-                <Setter Property="VerticalAlignment" Value="Center"/>
-                <Setter Property="HorizontalAlignment" Value="Stretch"/>
-                <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                <Setter Property="VerticalContentAlignment" Value="Center"/>
             </Style.Setters>
         </Style>
         <Style x:Key="ListViewItemAddButton" TargetType="Button">
@@ -343,6 +395,18 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+        <Style x:Key="ListViewItemComboBox" TargetType="ComboBox">
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="1"/>
+            <Setter Property="Padding" Value="20 8"/>
+            <Setter Property="FontFamily" Value="Calibri"/>
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
         <Style x:Key="GenericListView" TargetType="ListView">
             <Style.Setters>
                 <Setter Property="Background" Value="WhiteSmoke"/>
@@ -423,6 +487,8 @@
         <converter:StarWidthConverter x:Key="starWidthConverter"/>
         <converter:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
         <converter:InverseBoolToOpacityConverter x:Key="InverseBoolToOpacityConverter"/>
+        <converter1:OperationStringToVisibilityConverter x:Key="OperationStringToVisibilityConverter"/>
+        <converter1:InverseOperationStringToVisibilityConverter x:Key="InverseOperationStringToVisibilityConverter"/>
     </UserControl.Resources>
     <Grid Background="#999999">
         <Grid.RowDefinitions>
@@ -505,17 +571,25 @@
                 <ListView.View>
                     <GridView>
                             <GridViewColumn x:Name="StructureIDColumn"
-                                            Width="250">
-                                <GridViewColumn.Header>
-                                    <GridViewColumnHeader Content="StructureID"
+                                            Width="200">
+                            <GridViewColumn.Header>
+                                <GridViewColumnHeader Content="StructureID"
                                                           Command="{Binding CommandSortStructuresInTheListViewByStructureID}"
                                                           Style="{StaticResource GenericGridViewColumnHeader}"/>
                                 </GridViewColumn.Header>
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
                                     <ComboBox ItemsSource="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type UserControl}}, Path=DataContext.structureIDsIEnumerable, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
-                                            SelectedItem="{Binding StructureID, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                            Style="{StaticResource GenericComboBox}" />
+                                            SelectedItem="{Binding StructureID, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Stretch"
+                                            Style="{StaticResource ListViewItemComboBox}" Grid.Column="0" Grid.Row="0"/>
+                                    </Grid>
                                 </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
@@ -527,7 +601,7 @@
                                 </GridViewColumn.Header>
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
-                                    <TextBlock Text="{Binding StructureLabel, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                    <TextBlock Text="{Binding StructureLabel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                            Style="{StaticResource ListViewItemTextBlock}"/>
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
@@ -602,17 +676,69 @@
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
-                            <GridViewColumn x:Name="ActionColumn"  
-                                            Width="200">
-                                <GridViewColumn.Header>
-                                <GridViewColumnHeader Content="Action" IsHitTestVisible="False"
+                        <GridViewColumn x:Name="ActionColumn"  
+                                            Width="250">
+                            <GridViewColumn.Header>
+                                <GridViewColumnHeader Content="Operator/Structure/Margin" IsHitTestVisible="False"
                                                           Style="{StaticResource GenericGridViewColumnHeader}"/>
-                                </GridViewColumn.Header>
-                                <GridViewColumn.CellTemplate>
+                            </GridViewColumn.Header>
+                            
+                            <GridViewColumn.CellTemplate>
                                     <DataTemplate>
-                                    <Button Style="{StaticResource ListViewItemActionButton}">
-                                            <TextBlock Text="Action" Style="{StaticResource ListViewItemTextBlock}"/>
-                                        </Button>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="3*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <ComboBox Name="ManipulationComboBox" 
+                                                  Grid.Column="0" Grid.Row="0"
+                                                  Style="{StaticResource ListViewItemComboBox}" Padding="0"
+                                                  ItemsSource="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type UserControl}}, 
+                                                  Path=DataContext.ManipulationsAvailable, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  SelectedItem="{Binding Operation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                                  
+                                        <ComboBox Name="StructureToManipulateComboBox" 
+                                                  Grid.Column="1" Grid.Row="0"
+                                                  ItemsSource="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type UserControl}}, Path=DataContext.structureIDsIEnumerable, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  SelectedItem="{Binding Structure2ToManipulateID}"
+                                                  Style="{StaticResource ListViewItemComboBox}"/>
+
+                                        <Grid Name="OneMargin" Grid.Column="2" Grid.Row="0" 
+                                              Visibility="{Binding Operation, Converter={StaticResource InverseOperationStringToVisibilityConverter}}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="*"/>
+                                            </Grid.RowDefinitions>
+                                            <TextBox x:Name="MarginTextBox" Grid.Column="2" Grid.Row="0"
+                                        Text="{Binding Margin, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                Style="{StaticResource GenericTextBox}"/>
+                                        </Grid>
+
+                                        <Grid Name="TwoMargins" Grid.Column="2" Grid.Row="0" 
+                                              Visibility="{Binding Operation, Converter={StaticResource OperationStringToVisibilityConverter}}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="*"/>
+                                            </Grid.RowDefinitions>
+                                            <TextBox x:Name="Margin1TextBox" Grid.Column="0" Grid.Row="0"
+                                        Text="{Binding Margin, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                Style="{StaticResource GenericTextBox}"/>
+
+                                            <TextBox x:Name="Margin2TextBox" Grid.Column="1" Grid.Row="0"
+                                        Text="{Binding Margin2, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                Style="{StaticResource GenericTextBox}"/>
+                                        </Grid>
+                                        
+                                    </Grid>
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
@@ -667,12 +793,13 @@
         <Button x:Name="ButtonEXIT" Grid.Row="2" Grid.Column="0"  Style="{StaticResource GenericButton}">
             <TextBlock Text="EXIT"/>
         </Button>
-        <Button x:Name="ButtonOpenViewer" Grid.Row="2" Grid.Column="1"  Style="{StaticResource GenericButton}">
-            <TextBlock Text="Open Viewer"/>
+        <Button x:Name="ButtonPropogateAllStructures" Grid.Row="2" Grid.Column="1"  Style="{StaticResource GenericButton}"
+                Command="{Binding CommandPopulateStructuresToTheListView}">
+            <TextBlock Text="Propogate Structures"/>
         </Button>
-        <Button x:Name="ButtonLaunch" Grid.Row="2" Grid.Column="2" Style="{StaticResource GenericButton}"
-                 Command="{Binding CommandPopulateStructuresToTheListView}">
-            <TextBlock Text="Launch"/>
+        <Button x:Name="CreateStructures" Grid.Row="2" Grid.Column="2" Style="{StaticResource GenericButton}"
+                 Command="{Binding CommandCreateOptimizationStructures}">
+            <TextBlock Text="Create Structures"/>
         </Button>
         <Grid x:Name="LoadingSpinner" Grid.Row="1" Grid.ColumnSpan="3"
               Background="Transparent"
