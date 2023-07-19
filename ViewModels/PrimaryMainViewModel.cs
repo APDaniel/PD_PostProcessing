@@ -28,6 +28,10 @@ namespace PD_ScriptTemplate.ViewModels
         private Boolean _workIsInProgress { get; set; } = false;
         private Dispatcher userInterface;
         private string _dataPath { get; set; }
+
+        //Checks if user wants to create structureson a duplicated structure set
+        private bool _duplicateStructureSet { get; set; }
+        private string _currentStructureSetId { get; set; }
         private string _selectedComboboxStructureID { get; set; } = "TestStructureID";
 
         //Selected structure ID from the StructureViewModel selected in the ListView
@@ -50,7 +54,11 @@ namespace PD_ScriptTemplate.ViewModels
             = new ObservableCollection<StructureViewModel>() { new StructureViewModel(
                 new StructureModel("TEST ID", "TEST DICOMtype",
                     (Color)ColorConverter.ConvertFromString("#046e4c"), true, 21)) };
+
         private StructureViewModel _structureViewModel;
+
+        //Collection of all available structure sets for the selected patient
+        private ObservableCollection<string> _availableStructureSetIDs { get; set; } = new ObservableCollection<string>();
 
         //Selected Operation
         private string _selectedManipulation { get; set; } = "Operation...";
@@ -77,8 +85,25 @@ namespace PD_ScriptTemplate.ViewModels
             set { _selectedStructureIDtoShow = value; }
         }
 
+        public bool duplicateStructureSet 
+        { 
+            get { return _duplicateStructureSet; } 
+            set { _duplicateStructureSet = value; } }
         //ID of the structureSet taken from the context
-        public string currentStructureSetId { get; set; } = "Test StructureSet ID";
+        public string currentStructureSetId
+        {
+            get { return _currentStructureSetId; }
+            set 
+            {
+                _currentStructureSetId=value;
+                //Grab current structureSet ID from the selected structure set, populate list of structures
+                GetAllStructureIDsFromStructureSet();
+                //PopulateStructuresToTheListView();
+                AddStructureToTheListView();
+                Task.Delay(50);
+                PopulateStructuresDataToTheCollection();
+            }
+        }
 
         //Structure ID for comboboxes
         public string selectedComboboxStructureID
@@ -110,6 +135,14 @@ namespace PD_ScriptTemplate.ViewModels
         //Selected margin
         public int SelectedMargin { get { return _selectedMargin; } set { _selectedMargin = value; } }
 
+        //Collection of available structure sets for the selected patient
+        public IEnumerable availableStructureSets 
+        { 
+            get { return _availableStructureSetIDs; } 
+            set { _availableStructureSetIDs = (ObservableCollection<string>)value; } 
+        }
+
+        //Collection of available manipulations
         public IEnumerable ManipulationsAvailable
         {
             get { return _availableManipulations; }
@@ -145,14 +178,15 @@ namespace PD_ScriptTemplate.ViewModels
         #region Constructor
         public PrimaryMainViewModel(EsapiWorker _esapiWorker = null) //initialize defined view model, set non-freezing user interface
         {
-
+            
             esapiWorker = _esapiWorker;
             userInterface = Dispatcher.CurrentDispatcher;
 
+            //Find all available structure sets
+            FindAllAvailableStructureSets();
             //Grab current structureSet ID from the context, populate list of structures
             GetAllStructureIDsFromStructureSet();
-            //PopulateStructuresToTheListView();
-            AddStructureToTheListView();
+                        
             Task.Delay(50);
             PopulateStructuresDataToTheCollection();
 
@@ -192,6 +226,8 @@ namespace PD_ScriptTemplate.ViewModels
             /// </summary>
             CommandCreateOptimizationStructures = new RelayCommand(CreateOptimizationStructures);
             #endregion
+
+
         }
         #endregion
         #region Private methods
@@ -288,6 +324,45 @@ namespace PD_ScriptTemplate.ViewModels
         }
         #endregion
 
+        ///<summary>
+        ///Find all available structure sets for the selected patient
+        /// </summary>
+        private async void FindAllAvailableStructureSets()
+        {
+            Logger.LogInfo("Called a method to read all structure sets for the selected patient");
+            try
+            {
+                await esapiWorker.AsyncRunStructureContext((_patient, _structureSet) =>
+                {
+                    //Create a collection 
+                    ObservableCollection<string> _availableStructureSetIDsCollection = new ObservableCollection<string>();
+                    if (_availableStructureSetIDsCollection.Count > 0) _availableStructureSetIDsCollection.Clear();
+                    foreach (StructureSet _structureSetToAdd in _patient.StructureSets)
+                    {
+                        Logger.LogInfo(string.Format("   ...Adding the structure set: {0} to the collection of structure sets", _structureSetToAdd.Id));
+                        _availableStructureSetIDsCollection.Add(_structureSetToAdd.Id);
+                    }
+
+                    userInterface.Invoke(() => 
+                    {
+                        if (_availableStructureSetIDs.Count > 0) _availableStructureSetIDs.Clear();
+                        foreach (string structureSetID in _availableStructureSetIDsCollection) 
+                        {
+                            _availableStructureSetIDs.Add(structureSetID);
+                        }
+                        Logger.LogInfo(string.Format("   ...Selecting default structure set: {0}", currentStructureSetId));
+                        currentStructureSetId = _availableStructureSetIDs.FirstOrDefault();
+                    });
+                });
+            }
+            catch (Exception exception)
+            {
+                //Log any appeared issues
+                Logger.LogError(string.Format("{0}\r\n{1}\r\n{2}", exception.Message, exception.InnerException, exception.StackTrace));
+                MessageBox.Show(string.Format("{0}\r\n{1}\r\n{2}", exception.Message, exception.InnerException, exception.StackTrace));
+            }
+        }
+
         /// <summary>
         /// Method called when the PrimaryViewModel is initialized.
         /// It creates a copy of ObservableCollection with required data from Eclipse
@@ -299,7 +374,7 @@ namespace PD_ScriptTemplate.ViewModels
                 Logger.LogInfo("Populating structures from the database to the structuresFromEclipseCollection...");
 
                 //Valiables to use later in this method
-                string ew_currentStructureSetId = string.Empty;
+                string ew_currentStructureSetId = _currentStructureSetId;
                 StructureSet ew_currentStructureSet;
 
                 ///Clear the collection of all predefined items
@@ -308,14 +383,15 @@ namespace PD_ScriptTemplate.ViewModels
                 //Get all structures for the structure set from context and add them into the StructureViewModel collection of StructureModels
                 await esapiWorker.AsyncRunStructureContext((_patient, _structureSet) =>
                 {
-                    ew_currentStructureSetId = _structureSet.Id;
-                    ew_currentStructureSet = _structureSet;
+                    //ew_currentStructureSetId = _structureSet.Id; Grabs a structureSet from the context
+                    ew_currentStructureSetId = currentStructureSetId;
+                    ew_currentStructureSet = _patient.StructureSets.FirstOrDefault(x=>x.Id== ew_currentStructureSetId);
 
-                    userInterface.Invoke(() => { currentStructureSetId = ew_currentStructureSetId; });
+                    //userInterface.Invoke(() => { currentStructureSetId = ew_currentStructureSetId; });
                     Logger.LogInfo("   Run through structures in the structure set taken from context and take desired data");
-                    foreach (var selectedStructureID in _structureSet.Structures.Select(x => x.Id))
+                    foreach (var selectedStructureID in ew_currentStructureSet.Structures.Select(x => x.Id))
                     {
-                        var selectedStructure = _structureSet.Structures.FirstOrDefault(x => string.Equals(x.Id, selectedStructureID, StringComparison.OrdinalIgnoreCase));
+                        var selectedStructure = ew_currentStructureSet.Structures.FirstOrDefault(x => string.Equals(x.Id, selectedStructureID, StringComparison.OrdinalIgnoreCase));
                         #region private variables to be used in AsyncRunStructureContext
                         string _selectedStructureID = selectedStructure.Id;
                         string _selectedStructureDICOMtype = selectedStructure.DicomType;
@@ -326,7 +402,6 @@ namespace PD_ScriptTemplate.ViewModels
                         //Invoke dispatcher to enable collection updates from a different thread
                         userInterface.Invoke(() =>
                         {
-
                             //Add desired data from the Structure object to our collection of StructureViewModels
                             _structuresFromEclipseCollection.Add(new StructureViewModel(
                                 new StructureModel(_selectedStructureID, _selectedStructureDICOMtype,
@@ -377,15 +452,14 @@ namespace PD_ScriptTemplate.ViewModels
                 //Get all structures for the structure set from context and add them into the StructureViewModel collection of StructureModels
                 await esapiWorker.AsyncRunStructureContext((_patient, _structureSet) =>
                 {
-                    ew_currentStructureSetId = _structureSet.Id;
-                    ew_currentStructureSet = _structureSet;
+                    ew_currentStructureSetId = _currentStructureSetId;
+                    ew_currentStructureSet = _patient.StructureSets.FirstOrDefault(x => x.Id == _currentStructureSetId);
 
-                    Logger.LogInfo("   Set Current structure set ID");
-                    userInterface.Invoke(() => { currentStructureSetId = ew_currentStructureSetId; });
+
                     Logger.LogInfo("   Run through structures in the structure set taken from context and take desired data");
-                    foreach (var selectedStructureID in _structureSet.Structures.Select(x => x.Id))
+                    foreach (var selectedStructureID in ew_currentStructureSet.Structures.Select(x => x.Id))
                     {
-                        var selectedStructure = _structureSet.Structures.FirstOrDefault(x => string.Equals(x.Id, selectedStructureID, StringComparison.OrdinalIgnoreCase));
+                        var selectedStructure = ew_currentStructureSet.Structures.FirstOrDefault(x => string.Equals(x.Id, selectedStructureID, StringComparison.OrdinalIgnoreCase));
                         #region private variables to be used in AsyncRunStructureContext
                         string _selectedStructureID = selectedStructure.Id;
                         string _selectedStructureDICOMtype = selectedStructure.DicomType;
@@ -554,14 +628,14 @@ namespace PD_ScriptTemplate.ViewModels
                 {
                     var _allStructureIDs = new ObservableCollection<string>();
                     //Invoke dispatcher to enable collection updates from a different thread
+                    var _currentStructureSet = _patient.StructureSets.FirstOrDefault(x => x.Id == _currentStructureSetId);
 
-
-                    foreach (string structureID in _structureSet.Structures.Select(x => x.Id))
+                    foreach (string structureID in _currentStructureSet.Structures.Select(x => x.Id))
                     {
                         userInterface.Invoke(() =>
                         {
                             try { _allStructureIDs.Add(structureID); }
-                            catch { Logger.LogWarning(string.Format("   Unable to add structureID of the structure {0} tot he collection of structureIDs", structureID)); }
+                            catch { Logger.LogWarning(string.Format("   Unable to add structureID of the structure {0} to the collection of structureIDs", structureID)); }
                         });
                     }
                     _structureIDsCollection = _allStructureIDs;
@@ -594,11 +668,12 @@ namespace PD_ScriptTemplate.ViewModels
                 //Get all structures for the structure set from context and add them into the StructureViewModel collection of StructureModels
                 await esapiWorker.AsyncRunStructureContext((_patient, _structureSet) =>
                 {
+                    var _selectedStrucutreSet = _patient.StructureSets.FirstOrDefault(x => x.Id == currentStructureSetId);
                     foreach (var structureViewModel in _structureViewModelCollection)
                     {
-                        foreach (var selectedStructureID in _structureSet.Structures.Select(x => x.Id))
+                        foreach (var selectedStructureID in _selectedStrucutreSet.Structures.Select(x => x.Id))
                         {
-                            var _selectedStructure = _structureSet.Structures.FirstOrDefault(x => string.Equals(x.Id, structureViewModel.StructureID, StringComparison.OrdinalIgnoreCase));
+                            var _selectedStructure = _selectedStrucutreSet.Structures.FirstOrDefault(x => string.Equals(x.Id, structureViewModel.StructureID, StringComparison.OrdinalIgnoreCase));
                             var _selectedStructureID = _selectedStructure.Id;
                             var _selectedStructureDICOMtype = _selectedStructure.DicomType;
                             var _selectedStructureColor = _selectedStructure.Color;
@@ -668,14 +743,13 @@ namespace PD_ScriptTemplate.ViewModels
 
                 //Check if the duplicated structureSet ID is unique
                 Logger.LogInfo("   ...Checking if the ID of duplicated structure set is unique");
-                for (int i = 0; i < 9; i++)
+                for (int i = 1; i < 9; i++)
                 {
                     _duplicatedStructureSetId = _duplicatedStructureSetId.Substring(0, _duplicatedStructureSetId.Length - 1) + i.ToString();
 
                     var check = _patient.StructureSets.FirstOrDefault(x => x.Id == _duplicatedStructureSetId);
                     if (check == null) break;
                 }
-                if (_duplicatedStructureSetId == "Auto0") _duplicatedStructureSetId = "Auto";
                 Logger.LogInfo(string.Format("   ...Decided to use ID: {0}", _duplicatedStructureSetId));
 
                 Logger.LogInfo(string.Format("   ...Enagbling modifications for the patient: {0}", _patient.Id));
@@ -1088,6 +1162,7 @@ namespace PD_ScriptTemplate.ViewModels
                 Logger.LogError(string.Format("{0}\r\n{1}\r\n{2}", exception.Message, exception.InnerException, exception.StackTrace));
                 MessageBox.Show(string.Format("{0}\r\n{1}\r\n{2}", exception.Message, exception.InnerException, exception.StackTrace));
             }
+            FindAllAvailableStructureSets();
             _workIsInProgress = false;
         }
 

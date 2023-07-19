@@ -229,6 +229,11 @@
                 <Setter Property="Height" Value="auto"/>
             </Style.Setters>
         </Style>
+        <Style x:Key="GenericCheckBox" TargetType="CheckBox">
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="8"/>
+        </Style>
         <Style x:Key="ListViewItemTextBlock" TargetType="TextBlock">
             <Style.Setters>
                 <Setter Property="Padding" Value="20 8"/>
@@ -506,19 +511,20 @@
                    Style="{StaticResource GenericRectangle}"/>
         <Grid Grid.Row="0" Grid.Column="0">
             <Grid.RowDefinitions>
-                <RowDefinition/>
-                <RowDefinition/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
+                <ColumnDefinition Width="1.5*"/>
+                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Grid.Row="0" Grid.Column="0"
+            <TextBlock Grid.Row="0" Grid.Column="0" Margin="0 0 0 0"
                        Text="Structure Set:" Style="{StaticResource GenericTextBlock}"
                        TextAlignment="Left" HorizontalAlignment="Left" VerticalAlignment="Bottom"/>
-
-            <TextBlock Grid.Row="1" Grid.Column="0"
-                   Text="{Binding currentStructureSetId}" Style="{StaticResource GenericTextBlock}"
-                   TextAlignment="Left" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+            <ComboBox Grid.Row="1" Grid.Column="0" Margin="8 0 0 8"
+                   SelectedItem="{Binding currentStructureSetId, Mode=TwoWay}"
+                      ItemsSource="{Binding availableStructureSets, Mode=OneWay}"
+                   Style="{StaticResource GenericComboBox}"/>
         </Grid>
         <Grid Grid.Row="0" Grid.Column="1">
             <Grid.ColumnDefinitions>
@@ -546,7 +552,6 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
-
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Row="1" Grid.Column="0" 
                        Text="Template:" Style="{StaticResource GenericTextBlock}"
@@ -554,7 +559,12 @@
             <ComboBox  Grid.Row="1" Grid.Column="1" 
                        Text="Template:" Style="{StaticResource GenericComboBox}"
                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-
+            <TextBlock Grid.Row="2" Grid.Column="1" FontSize="18"
+                       Text="Duplicate Structure Set" Style="{StaticResource GenericTextBlock}"
+                       HorizontalAlignment="Right" Padding="0 0 10 0"/>
+            <CheckBox Grid.Row="2" Grid.Column="0" 
+                      Style="{StaticResource GenericCheckBox}"
+                      IsChecked="{Binding duplicateStructureSet, Mode=TwoWay}"/>
         </Grid>
         <Grid Grid.Row="1" Grid.ColumnSpan="3" 
               Background="#d4d4d4" 
