@@ -13,6 +13,7 @@
              xmlns:converter1="clr-namespace:PD_ScriptTemplate.Converter">
 
     <UserControl.Resources>
+        <converter:RangeToBooleanConverter x:Key="RangeToBooleanConverter"/>
         <SolidColorBrush x:Key="BorderPrimary" Color="#1c1c1c"/>
         <Style x:Key="PageHeader" TargetType="TextBlock" >
             <Setter Property="FontSize" Value="32"/>
@@ -126,6 +127,7 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+            
         </Style>
         <Style x:Key="GenericComboBox" TargetType="ComboBox">
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
@@ -486,6 +488,106 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+        <Style x:Key="MarginTextBox" TargetType="TextBox">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontFamily" Value="Calibri"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="Background" Value="#F2F2F2"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#CCCCCC"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Grid>
+                            <Border x:Name="Border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="3"/>
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                  Margin="0,0,0,0"
+                                  Background="Transparent"
+                                  HorizontalAlignment="Stretch"
+                                  VerticalAlignment="Center"
+                                  IsTabStop="False"
+                                  Padding="{TemplateBinding Padding}"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Margin, Converter={StaticResource RangeToBooleanConverter}}" Value="False">
+                    <Setter Property="Background" Value="Orange"/>
+                    <DataTrigger.EnterActions>
+                        <BeginStoryboard>
+                            <Storyboard RepeatBehavior="3x">
+                                <ColorAnimation Storyboard.TargetProperty="(TextBox.Background).(SolidColorBrush.Color)"
+                                                From="Orange" To="WhiteSmoke" Duration="0:0:0.5" AutoReverse="True" />
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </DataTrigger.EnterActions>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Margin, Converter={StaticResource RangeToBooleanConverter}}" Value="True">
+                    <Setter Property="Background" Value="#F2F2F2" />
+                    
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="Margin2TextBox" TargetType="TextBox">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontFamily" Value="Calibri"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="Background" Value="#F2F2F2"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#CCCCCC"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Grid>
+                            <Border x:Name="Border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="3"/>
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                  Margin="0,0,0,0"
+                                  Background="Transparent"
+                                  HorizontalAlignment="Stretch"
+                                  VerticalAlignment="Center"
+                                  IsTabStop="False"
+                                  Padding="{TemplateBinding Padding}"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Margin2, Converter={StaticResource RangeToBooleanConverter}}" Value="False">
+                    <Setter Property="Background" Value="Orange"/>
+                    <DataTrigger.EnterActions>
+                        <BeginStoryboard>
+                            <Storyboard RepeatBehavior="3x">
+                                <ColorAnimation Storyboard.TargetProperty="(TextBox.Background).(SolidColorBrush.Color)"
+                                                From="Orange" To="WhiteSmoke" Duration="0:0:0.5" AutoReverse="True" />
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </DataTrigger.EnterActions>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Margin2, Converter={StaticResource RangeToBooleanConverter}}" Value="True">
+                    <Setter Property="Background" Value="#F2F2F2" />
+
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
         <Color x:Key="FilledColor" A="255" B="155" R="155" G="155"/>
         <Color x:Key="UnfilledColor" A="0" B="155" R="155" G="155"/>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
@@ -494,6 +596,8 @@
         <converter:InverseBoolToOpacityConverter x:Key="InverseBoolToOpacityConverter"/>
         <converter1:OperationStringToVisibilityConverter x:Key="OperationStringToVisibilityConverter"/>
         <converter1:InverseOperationStringToVisibilityConverter x:Key="InverseOperationStringToVisibilityConverter"/>
+        <converter:ButtonEnabledConverter x:Key="ButtonEnabledConverter"/>
+        <converter:InverseOperationStringToVisibilityConverter1 x:Key="InverseOperationStringToVisibilityConverter1"/>
     </UserControl.Resources>
     <Grid Background="#999999">
         <Grid.RowDefinitions>
@@ -567,21 +671,20 @@
                       IsChecked="{Binding duplicateStructureSet, Mode=TwoWay}"/>
         </Grid>
         <Grid Grid.Row="1" Grid.ColumnSpan="3" 
-              Background="#d4d4d4" 
+              Background="WhiteSmoke" 
               Opacity="{Binding workIsInProgress, Converter={StaticResource InverseBoolToOpacityConverter}}">
             
                 <ListView x:Name="StructuresListView" 
-                          ScrollViewer.CanContentScroll="True" 
-                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                          ScrollViewer.VerticalScrollBarVisibility="Auto"
+                          ScrollViewer.CanContentScroll="True"  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                          ScrollViewer.VerticalScrollBarVisibility="Auto" BorderBrush="Transparent"
                           ItemsSource="{Binding structuresIEnumerable, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
                           SelectedItem="{Binding selectedStructureListViewItem, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                           IsSynchronizedWithCurrentItem="True" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                          Style="{StaticResource GenericListView}" ItemContainerStyle="{StaticResource GenericListViewItem}" Width="Auto">
+                          Style="{StaticResource GenericListView}" ItemContainerStyle="{StaticResource GenericListViewItem}" Width="1290">
                 <ListView.View>
                     <GridView>
                             <GridViewColumn x:Name="StructureIDColumn"
-                                            Width="200">
+                                            Width="230">
                             <GridViewColumn.Header>
                                 <GridViewColumnHeader Content="StructureID"
                                                           Command="{Binding CommandSortStructuresInTheListViewByStructureID}"
@@ -603,7 +706,8 @@
                                 </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
-                            <GridViewColumn x:Name="LabelColumn" Width="150">
+                        <GridViewColumn x:Name="LabelColumn" 
+                                        Width="auto">
                                 <GridViewColumn.Header>
                                     <GridViewColumnHeader Content="Label"
                                                           Command="{Binding CommandSortStructuresInTheListViewByStructureLabel}"
@@ -686,8 +790,8 @@
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
-                        <GridViewColumn x:Name="ActionColumn"  
-                                            Width="250">
+                            <GridViewColumn x:Name="ActionColumn"  
+                                            Width="385">
                             <GridViewColumn.Header>
                                 <GridViewColumnHeader Content="Operator/Structure/Margin" IsHitTestVisible="False"
                                                           Style="{StaticResource GenericGridViewColumnHeader}"/>
@@ -715,23 +819,37 @@
                                                   Grid.Column="1" Grid.Row="0"
                                                   ItemsSource="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type UserControl}}, Path=DataContext.structureIDsIEnumerable, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                                   SelectedItem="{Binding Structure2ToManipulateID}"
-                                                  Style="{StaticResource ListViewItemComboBox}"/>
+                                                  Style="{StaticResource ListViewItemComboBox}" 
+                                                  Visibility="{Binding Operation, Converter={StaticResource InverseOperationStringToVisibilityConverter}}"/>
 
                                         <Grid Name="OneMargin" Grid.Column="2" Grid.Row="0" 
                                               Visibility="{Binding Operation, Converter={StaticResource InverseOperationStringToVisibilityConverter}}">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
-                                                </Grid.ColumnDefinitions>
+                                            </Grid.ColumnDefinitions>
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="*"/>
                                             </Grid.RowDefinitions>
+
                                             <TextBox x:Name="MarginTextBox" Grid.Column="2" Grid.Row="0"
                                         Text="{Binding Margin, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
-                                                Style="{StaticResource GenericTextBox}"/>
+                                                Style="{StaticResource MarginTextBox}"/>
                                         </Grid>
+                                        <Grid Name="OneMarginPRV" Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="0" 
+                                              Visibility="{Binding Operation, Converter={StaticResource InverseOperationStringToVisibilityConverter1}}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="*"/>
+                                            </Grid.RowDefinitions>
 
-                                        <Grid Name="TwoMargins" Grid.Column="2" Grid.Row="0" 
-                                              Visibility="{Binding Operation, Converter={StaticResource OperationStringToVisibilityConverter}}">
+                                            <TextBox x:Name="MarginTextBoxPRV" Grid.Column="2" Grid.Row="0"
+                                        Text="{Binding Margin, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                Style="{StaticResource MarginTextBox}"/>
+                                        </Grid>
+                                        <Grid Name="TwoMargins" Grid.Column="1" Grid.RowSpan="2" Grid.Row="0" 
+                                            Visibility="{Binding Operation, Converter={StaticResource OperationStringToVisibilityConverter}}">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="*"/>
@@ -741,11 +859,10 @@
                                             </Grid.RowDefinitions>
                                             <TextBox x:Name="Margin1TextBox" Grid.Column="0" Grid.Row="0"
                                         Text="{Binding Margin, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
-                                                Style="{StaticResource GenericTextBox}"/>
+                                                Style="{StaticResource MarginTextBox}"/>
 
                                             <TextBox x:Name="Margin2TextBox" Grid.Column="1" Grid.Row="0"
-                                        Text="{Binding Margin2, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
-                                                Style="{StaticResource GenericTextBox}"/>
+                                                Text="{Binding Margin2, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" Style="{StaticResource Margin2TextBox}"/>
                                         </Grid>
                                         
                                     </Grid>
@@ -800,7 +917,7 @@
 
 
         </Grid>
-        <Button x:Name="ButtonEXIT" Grid.Row="2" Grid.Column="0"  Style="{StaticResource GenericButton}">
+        <Button x:Name="ButtonEXIT" Grid.Row="2" Grid.Column="0"  Style="{StaticResource GenericButton}" Command="{Binding ExitCommand}">
             <TextBlock Text="EXIT"/>
         </Button>
         <Button x:Name="ButtonPropogateAllStructures" Grid.Row="2" Grid.Column="1"  Style="{StaticResource GenericButton}"
@@ -808,9 +925,11 @@
             <TextBlock Text="Propogate Structures"/>
         </Button>
         <Button x:Name="CreateStructures" Grid.Row="2" Grid.Column="2" Style="{StaticResource GenericButton}"
-                 Command="{Binding CommandCreateOptimizationStructures}">
+                 Command="{Binding CommandCreateOptimizationStructures}" 
+                IsEnabled="{Binding IsButtonEnabled}">
             <TextBlock Text="Create Structures"/>
         </Button>
+        
         <Grid x:Name="LoadingSpinner" Grid.Row="1" Grid.ColumnSpan="3"
               Background="Transparent"
                Visibility="{Binding workIsInProgress, Converter={StaticResource BoolToVisibilityConverter}}">

@@ -18,6 +18,7 @@ namespace VMS.TPS
 {
     public class Script // This is the script that will be called by Eclipse. It is referenced by PD_PluginTester
     {
+        public static ScriptWindow mainWindow;
         public Script()
         {
 
@@ -43,7 +44,7 @@ namespace VMS.TPS
 
             //Instead of hooking DataContext to one specific ViewModel, we use a MainViewModel which allows navigation between different View Models.
             //It can be useful for projects with several Views as the navigation layer is required
-            var mainWindow = new ScriptWindow() { DataContext=mainViewModel}; 
+            mainWindow = new ScriptWindow() { DataContext=mainViewModel}; 
             mainWindow.ShowDialog(); 
             
         }

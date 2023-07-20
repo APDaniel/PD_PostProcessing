@@ -1,27 +1,22 @@
 ﻿using System;
 using System.Globalization;
-using System.Windows;
 using System.Windows.Data;
 
 namespace PD_ScriptTemplate.Converter
 {
-    public class InverseOperationStringToVisibilityConverter : IValueConverter
+    public class RangeToBooleanConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            string stringValue = value as string;
-
-            // Check if the string value is "ring"
-            if (stringValue != "ring")
+            if (value is string stringValue)
             {
-                return Visibility.Visible;
+                if (int.TryParse(stringValue, out int intValue))
+                {
+                    return intValue >= -50 && intValue <= 50;
+                }
+                return false;
             }
-            else
-            {
-                return Visibility.Collapsed;
-            }
-
-            
+            return false;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -29,4 +24,5 @@ namespace PD_ScriptTemplate.Converter
             throw new NotImplementedException();
         }
     }
+
 }

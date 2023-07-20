@@ -8,7 +8,7 @@
         xmlns:viewmodels="clr-namespace:PD_ScriptTemplate.ViewModels" 
         mc:Ignorable="d"
         Title="PD_ScriptTemplate"
-        Width="1061" Height="1000" ResizeMode="CanResizeWithGrip"
+        Width="1240" Height="1000" ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen">
     <views:MainView/>
 </Window>

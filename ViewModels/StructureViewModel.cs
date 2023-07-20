@@ -9,6 +9,7 @@ namespace PD_ScriptTemplate.ViewModels
     {
        
         private StructureModel _structureModel;
+        private string _structure2ToManipulateID { get; set; }
         public string StructureID
         {
             get { return _structureModel.StructureID; }
@@ -44,17 +45,33 @@ namespace PD_ScriptTemplate.ViewModels
             set { _structureModel.StructureVolumeWithcc=value; }
         }
 
-        public string Operation { get; set; }
+        public string Operation { get; set; } = "+";
         
-        public string Structure2ToManipulateID { get; set; }
-        public string  Margin { get; set; } = "0";
+        public string Structure2ToManipulateID 
+        { 
+            get 
+            {
+                return _structure2ToManipulateID; 
+            }
+            set
+            {
+                _structure2ToManipulateID = value;
+                Communicator.PublishStringChanged(value);
+            } 
+        }
 
-        public string Margin2 { get; set; } = "0";
+        private string _margin { get; set; } = "0";
+        public string Margin { get {return _margin; } set {_margin=value; Communicator.PublishStringChanged(value); } }
+
+        private string _margin2 { get; set; } = "0";
+        public string Margin2 { get { return _margin2; } set { _margin2 = value; Communicator.PublishStringChanged(value); } }
 
         public StructureViewModel(StructureModel structureModel)
         {
             _structureModel = structureModel ?? throw new ArgumentNullException(nameof(structureModel));
+            Communicator.PublishStringChanged(null);
         }
+
         
     }
 }

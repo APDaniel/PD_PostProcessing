@@ -3,6 +3,7 @@ using System.Windows.Input;
 
 namespace PD_ScriptTemplate.Commands
 {
+    
     /// <summary>
     /// This class represents a command relay to be used to initialize a method though a command layer
     /// </summary>
@@ -13,38 +14,52 @@ namespace PD_ScriptTemplate.Commands
         /// Action to run
         /// </summary>
         private Action mAction;
-        
+        private Func<bool> mCanExecute;
         #endregion
 
         #region Public Events
         /// <summary>
-        /// The event that fired when the CanExecute value has changed
+        /// The event that is fired when the CanExecute value has changed
         /// </summary>
-        public event EventHandler CanExecuteChanged = (sender, e) => { };
+        public event EventHandler CanExecuteChanged;
         #endregion
 
         #region Constructor
         /// <summary>
         /// Default constructor
         /// </summary>
-        public RelayCommand(Action action)
+        public RelayCommand(Action action, Func<bool> canExecute = null)
         {
             mAction = action;
+            mCanExecute = canExecute;
         }
         #endregion
 
-        #region Commands Methods
+        #region ICommand Implementation
         /// <summary>
-        /// A relay command can always execute
+        /// Determines whether the command can execute or not
         /// </summary>
-        public bool CanExecute(object parameter) { return true; }
+        public bool CanExecute(object parameter)
+        {
+            return mCanExecute?.Invoke() ?? true;
+        }
+
         /// <summary>
-        /// Executes the commands Action
+        /// Executes the command action
         /// </summary>
-        /// <param name="parameter"></param>
         public void Execute(object parameter)
         {
-            mAction();
+            mAction?.Invoke();
+        }
+        #endregion
+
+        #region Public Methods
+        /// <summary>
+        /// Raises the CanExecuteChanged event
+        /// </summary>
+        public void RaiseCanExecuteChanged()
+        {
+            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
         }
         #endregion
     }

@@ -214,10 +214,13 @@
     <Compile Include="Commands\RelayCommandSender.cs" />
     <Compile Include="Converter\BoolToVisibilityConverter.cs" />
     <Compile Include="Converter\BrushConverter.cs" />
+    <Compile Include="Converter\ButtonEnabledConverter.cs" />
     <Compile Include="Converter\InverseBoolToOpacityConverter.cs" />
     <Compile Include="Converter\InverseBoolToVisibilityConverter.cs" />
     <Compile Include="Converter\InverseOperationStringToVisibilityConverter.cs" />
+    <Compile Include="Converter\InverseStringToVisibilityConverter1.cs" />
     <Compile Include="Converter\OperationStringToVisibilityConverter.cs" />
+    <Compile Include="Converter\RangeToBooleanConverter.cs" />
     <Compile Include="Converter\StarWidthConverter.cs" />
     <Compile Include="Helpers\Communicator.cs" />
     <Compile Include="Helpers\EsapiWorker.cs" />
