@@ -3,17 +3,22 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:PD_ScriptTemplate.Views"
              xmlns:converter="clr-namespace:PD_ScriptTemplate.Converter"
              mc:Ignorable="d"
-             xmlns:fa="http://schemas.fontawesome.io/icons/"
-             xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
-             xmlns:cmd="http://www.galasoft.ch/mvvmlight" 
-             xmlns:local1="clr-namespace:PD_ScriptTemplate.Helpers" 
-             xmlns:converter1="clr-namespace:PD_ScriptTemplate.Converter">
+             xmlns:fa="http://schemas.fontawesome.io/icons/">
+
 
     <UserControl.Resources>
+        
         <converter:RangeToBooleanConverter x:Key="RangeToBooleanConverter"/>
+        <converter:BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <converter:StarWidthConverter x:Key="starWidthConverter"/>
+        <converter:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
+        <converter:InverseBoolToOpacityConverter x:Key="InverseBoolToOpacityConverter"/>
+        <converter:OperationStringToVisibilityConverter x:Key="OperationStringToVisibilityConverter"/>
+        <converter:InverseOperationStringToVisibilityConverter x:Key="InverseOperationStringToVisibilityConverter"/>
+        <converter:ButtonEnabledConverter x:Key="ButtonEnabledConverter"/>
+        <converter:InverseOperationStringToVisibilityConverter1 x:Key="InverseOperationStringToVisibilityConverter1"/>
         <SolidColorBrush x:Key="BorderPrimary" Color="#1c1c1c"/>
         <Style x:Key="PageHeader" TargetType="TextBlock" >
             <Setter Property="FontSize" Value="32"/>
@@ -590,14 +595,6 @@
         </Style>
         <Color x:Key="FilledColor" A="255" B="155" R="155" G="155"/>
         <Color x:Key="UnfilledColor" A="0" B="155" R="155" G="155"/>
-        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
-        <converter:StarWidthConverter x:Key="starWidthConverter"/>
-        <converter:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
-        <converter:InverseBoolToOpacityConverter x:Key="InverseBoolToOpacityConverter"/>
-        <converter1:OperationStringToVisibilityConverter x:Key="OperationStringToVisibilityConverter"/>
-        <converter1:InverseOperationStringToVisibilityConverter x:Key="InverseOperationStringToVisibilityConverter"/>
-        <converter:ButtonEnabledConverter x:Key="ButtonEnabledConverter"/>
-        <converter:InverseOperationStringToVisibilityConverter1 x:Key="InverseOperationStringToVisibilityConverter1"/>
     </UserControl.Resources>
     <Grid Background="#999999">
         <Grid.RowDefinitions>
@@ -929,7 +926,6 @@
                 IsEnabled="{Binding IsButtonEnabled}">
             <TextBlock Text="Create Structures"/>
         </Button>
-        
         <Grid x:Name="LoadingSpinner" Grid.Row="1" Grid.ColumnSpan="3"
               Background="Transparent"
                Visibility="{Binding workIsInProgress, Converter={StaticResource BoolToVisibilityConverter}}">

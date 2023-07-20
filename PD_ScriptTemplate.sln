@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.33328.57
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PD_ScriptTemplateProject", "PD_ScriptTemplateProject.csproj", "{5CB1648F-C40F-43D6-BB19-1D4AB5E28595}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PD_PluginTester", "..\PD_PluginTester\PD_PluginTester.csproj", "{93B605A3-784E-4497-B995-92759927E668}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PD_PluginTester", "PD_PluginTester\PD_PluginTester.csproj", "{93B605A3-784E-4497-B995-92759927E668}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -16,6 +16,7 @@ Global
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{5CB1648F-C40F-43D6-BB19-1D4AB5E28595}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{5CB1648F-C40F-43D6-BB19-1D4AB5E28595}.Debug|Any CPU.Build.0 = Debug|x64
 		{5CB1648F-C40F-43D6-BB19-1D4AB5E28595}.Debug|x64.ActiveCfg = Debug|x64
 		{5CB1648F-C40F-43D6-BB19-1D4AB5E28595}.Debug|x64.Build.0 = Debug|x64
 		{5CB1648F-C40F-43D6-BB19-1D4AB5E28595}.Release|Any CPU.ActiveCfg = Release|x64

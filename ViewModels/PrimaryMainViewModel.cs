@@ -453,7 +453,7 @@ namespace PD_ScriptTemplate.ViewModels
         /// </summary>
         public async void PopulateStructuresToTheListView()
         {
-            _workIsInProgress = true;
+            _workIsInProgress = false;
             try
             {
                 Logger.LogInfo("PrimaryMainViewModel initialization: Populating structures from the database to the ListView...");
@@ -606,7 +606,7 @@ namespace PD_ScriptTemplate.ViewModels
             {
                 await esapiWorker.AsyncRunStructureContext((_patient, _structureSet) =>
                 {
-                    _workIsInProgress = true;
+                    _workIsInProgress = false;
                     Task.Delay(1000);//It's a bad solution. Planned to be replaced with a model window
                     var selectedStructureSet = _patient.StructureSets.FirstOrDefault(x => x.Id == _currentStructureSetId);
                     var selectedStructure = selectedStructureSet.Structures.FirstOrDefault();
@@ -683,7 +683,7 @@ namespace PD_ScriptTemplate.ViewModels
         /// </summary>
         private async void Communicator_UpdateCollectionOfViewModelsWhenStructureIDchanged(object sender, string newValue)
         {
-            //_workIsInProgress = true;
+            //_workIsInProgress = false;
             Logger.LogInfo("StructureID in the comboBox changed, called method to update the collection of StructureViewModel");
 
             try
@@ -730,6 +730,7 @@ namespace PD_ScriptTemplate.ViewModels
                                             property.SetValue(structureViewModel, value);
                                         }
                                 }
+                                
                             });
                             
                         }
@@ -778,9 +779,11 @@ namespace PD_ScriptTemplate.ViewModels
                                     ));
                             _isButtonEnabled = true;
                     }
+                        _workIsInProgress = false;
+                        Logger.LogInfo(".......................UPDATED..........................");
                     });
                 });
-                _workIsInProgress = false;
+                
             }
             catch (Exception exception)
             {
@@ -799,7 +802,7 @@ namespace PD_ScriptTemplate.ViewModels
         private async void CreateOptimizationStructures()
         {
             Logger.LogInfo("Called a method to create optimization structures");
-            _workIsInProgress = true;
+            _workIsInProgress = false;
 
             try
             {
@@ -1254,7 +1257,6 @@ namespace PD_ScriptTemplate.ViewModels
         private void Exit() { VMS.TPS.Script.mainWindow.Close(); }
 
         #endregion
-
         #region public methods
         #endregion
     }

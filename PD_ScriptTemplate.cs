@@ -1,6 +1,5 @@
 using System;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using VMS.TPS.Common.Model.API;
 using System.Threading;
 using PD_ScriptTemplate.Helpers;
@@ -81,17 +80,20 @@ namespace VMS.TPS
             RunOnNewStaThread(() => { InititializeAndStartMainWindow(esapiWorker); frame.Continue = false; });
             Logger.LogInfo("New thread started");
 
+            var type = typeof(FontAwesome.WPF.FontAwesome); //This is required to ensure that FontAwesome will be created locally
+
             //Start the new queue, waiting until the window is closed
             Dispatcher.PushFrame(frame);
             Logger.LogInfo("New queue started");
 
+            
 
             // Note that Eclipse will pass you a handle to a window if you want to configure it yourself at runtime by adding and formating the layout of the controls.
             // The developer finds this to be very tedious and prefer to design the GUI using the Visual Studio designer.  However, this limits you (well, without adding significant complexity)
             // to running your script as a DLL (i.e. you have to compile the ScriptTemplate project to get ScriptTemplate.esapi.dll and run this in Eclipse.
             // If you don't want to do this, see https://github.com/VarianAPIs/Varian-Code-Samples/blob/master/Eclipse%20Scripting%20API/plugins/DvhLookups.cs for some examples of configuring the window layout
 
-
+            
         }
     }
 }
