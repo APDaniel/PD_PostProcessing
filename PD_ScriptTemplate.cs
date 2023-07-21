@@ -17,10 +17,11 @@ namespace VMS.TPS
 {
     public class Script // This is the script that will be called by Eclipse. It is referenced by PD_PluginTester
     {
+        PrimaryMainViewModel mainViewModel = null;
+
         public static ScriptWindow mainWindow;
         public Script()
         {
-
         }
         #region methods
         /// <summary>
@@ -38,20 +39,26 @@ namespace VMS.TPS
         /// </summary>
         private void InititializeAndStartMainWindow(EsapiWorker esapiWorker)
         {
-            var mainViewModel = new MainViewModel(esapiWorker); 
+            mainViewModel = new PrimaryMainViewModel(esapiWorker);
             Logger.LogInfo("MainViewModel set");
 
             //Instead of hooking DataContext to one specific ViewModel, we use a MainViewModel which allows navigation between different View Models.
             //It can be useful for projects with several Views as the navigation layer is required
-            mainWindow = new ScriptWindow() { DataContext=mainViewModel}; 
-            mainWindow.ShowDialog(); 
+
+            mainWindow = new ScriptWindow() { DataContext=mainViewModel};
+            mainWindow.ShowDialog();
             
         }
+
+        
+
+
         #endregion
 
         //[MethodImpl(MethodImplOptions.NoInlining)]
         public void Execute(ScriptContext context)
         {
+            
             // Rather than take the standard ESAPI input window, this code instantiates a WPF window subclass (ScriptWindow) which can be edited using the VS Designer 
 
             // If you don't want to use a GUI you can just pass the relevant ScriptContext fields to any method you want and call this method
@@ -77,11 +84,13 @@ namespace VMS.TPS
             Logger.LogInfo("Dispatcher frame started");
 
             //This method won't return until the window is closed
-            RunOnNewStaThread(() => { InititializeAndStartMainWindow(esapiWorker); frame.Continue = false; });
+            RunOnNewStaThread(() => 
+            { 
+                InititializeAndStartMainWindow(esapiWorker);
+                mainViewModel.Dispose();
+                frame.Continue = false; });
             Logger.LogInfo("New thread started");
-
-            var type = typeof(FontAwesome.WPF.FontAwesome); //This is required to ensure that FontAwesome will be created locally
-
+            
             //Start the new queue, waiting until the window is closed
             Dispatcher.PushFrame(frame);
             Logger.LogInfo("New queue started");

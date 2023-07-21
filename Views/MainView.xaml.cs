@@ -1,4 +1,7 @@
-﻿using System.Windows;
+﻿using PD_ScriptTemplate.Helpers;
+using PD_ScriptTemplate.ViewModels;
+using System;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
@@ -13,6 +16,7 @@ namespace PD_ScriptTemplate.Views
         {
             InitializeComponent();
         }
+        
 
         private void ListViewItem_MouseEnter(object sender, MouseEventArgs e)
         {
@@ -21,7 +25,10 @@ namespace PD_ScriptTemplate.Views
 
         private void ListView_Loaded(object sender, RoutedEventArgs e)
         {
-            
+
         }
     }
 }
+
+        
+    

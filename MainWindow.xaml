@@ -10,5 +10,5 @@
         Title="OptiStructures"
         Width="1240" Height="1000" ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen">
-    <views:MainView/>
+        <views:MainView/>
 </Window>

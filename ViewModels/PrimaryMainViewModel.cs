@@ -7,11 +7,13 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using VMS.TPS;
 using VMS.TPS.Common.Model.API;
 
 
@@ -22,14 +24,14 @@ namespace PD_ScriptTemplate.ViewModels
     /// The primary view model. Represents logic for the list of structures: add/delete structure to/from the list, define actions to be performed with the structure
     /// </summary>
 
-    public class PrimaryMainViewModel : BaseViewModel
+    public class PrimaryMainViewModel : BaseViewModel, IDisposable
     {
+        #region private fields
         //Due to StructureViewModels inside the PrimaryMainViewModel, we cannot use CanExecuteChanged() for disabling the button. Instead, we use Communicatior and bool value 
         private bool _isButtonEnabled { get; set; }
-
-        #region private fields
         private Boolean _workIsInProgress { get; set; } = false;
         private Dispatcher userInterface;
+        private string _spinnerPhrase { get; set; } = "Loading";
         private string _dataPath { get; set; }
 
         //Checks if user wants to create structureson a duplicated structure set
@@ -80,7 +82,8 @@ namespace PD_ScriptTemplate.ViewModels
         #endregion
         #region public fields
         public EsapiWorker esapiWorker = null;
-        public Boolean workIsInProgress => _workIsInProgress;
+        public string spinnerPhrase {get => _spinnerPhrase; set { _spinnerPhrase = value; }}
+        public Boolean workIsInProgress { get => _workIsInProgress; set { _workIsInProgress = value; } } 
         //Selected structure ID from the StructureViewModel selectid in the ListView
         public string selectedStructureIDtoShow
         {
@@ -190,10 +193,11 @@ namespace PD_ScriptTemplate.ViewModels
         #region Constructor
         public PrimaryMainViewModel(EsapiWorker _esapiWorker = null) //initialize defined view model, set non-freezing user interface
         {
-            
+            var type = typeof(FontAwesome.WPF.FontAwesome); //This is required to ensure that FontAwesome will be created locally. Otherwise the script will not be executed
+
             esapiWorker = _esapiWorker;
             userInterface = Dispatcher.CurrentDispatcher;
-
+            userInterface.Invoke(() => { _workIsInProgress = true; Task.Delay(500); _workIsInProgress = false; });
             //Find all available structure sets
             FindAllAvailableStructureSets();
             //Grab current structureSet ID from the context, populate list of structures
@@ -364,7 +368,6 @@ namespace PD_ScriptTemplate.ViewModels
 
                     userInterface.Invoke(() => 
                     {
-                        
                         foreach (string structureSetID in _availableStructureSetIDsCollection) 
                         {
                             var check = _availableStructureSetIDs.FirstOrDefault(x => x == structureSetID);
@@ -393,7 +396,7 @@ namespace PD_ScriptTemplate.ViewModels
         {
             try
             {
-                Logger.LogInfo("Populating structures from the database to the structuresFromEclipseCollection");
+                Logger.LogInfo("Populating structures from the database to the collection of structures from Eclipse");
 
                 //Valiables to use later in this method
                 string ew_currentStructureSetId = _currentStructureSetId;
@@ -424,15 +427,17 @@ namespace PD_ScriptTemplate.ViewModels
                         //Invoke dispatcher to enable collection updates from a different thread
                         userInterface.Invoke(() =>
                         {
+                            _workIsInProgress = true;
                             //Add desired data from the Structure object to our collection of StructureViewModels
                             _structuresFromEclipseCollection.Add(new StructureViewModel(
                                 new StructureModel(_selectedStructureID, _selectedStructureDICOMtype,
                                 _selectedStructureColor, _selectedStructureIsHighResolution, _selectedStructureVolume)));
                             Logger.LogInfo(string.Format(".........Structure added: {0}", _selectedStructureID));
+                            _workIsInProgress = false;
                         });
                     }
                     //Sort structures in the list by their ID
-                    Logger.LogInfo("Structures have been populated to the _structuresFromEclipseCollection");
+                    Logger.LogInfo("Structures have been populated to the to the collection of structures from Eclipse");
                 });
 
             }
@@ -453,7 +458,6 @@ namespace PD_ScriptTemplate.ViewModels
         /// </summary>
         public async void PopulateStructuresToTheListView()
         {
-            _workIsInProgress = false;
             try
             {
                 Logger.LogInfo("PrimaryMainViewModel initialization: Populating structures from the database to the ListView...");
@@ -469,7 +473,7 @@ namespace PD_ScriptTemplate.ViewModels
                 ///Clear the collection of all predefined items
                 if (_structureIDsCollection != null) _structureIDsCollection.Clear();
                 if (_structureViewModelCollection != null) _structureViewModelCollection.Clear();
-                await Task.Delay(750);
+                _workIsInProgress = true;
 
                 //Get all structures for the structure set from context and add them into the StructureViewModel collection of StructureModels
                 await esapiWorker.AsyncRunStructureContext((_patient, _structureSet) =>
@@ -477,7 +481,8 @@ namespace PD_ScriptTemplate.ViewModels
                     ew_currentStructureSetId = _currentStructureSetId;
                     ew_currentStructureSet = _patient.StructureSets.FirstOrDefault(x => x.Id == _currentStructureSetId);
 
-
+                    
+                    
                     Logger.LogInfo("Run through structures in the structure set taken from the desired patient and take neccessary data");
                     foreach (var selectedStructureID in ew_currentStructureSet.Structures.Select(x => x.Id))
                     {
@@ -495,18 +500,18 @@ namespace PD_ScriptTemplate.ViewModels
                         {
                             Logger.LogInfo(string.Format("...Populating structure:{0}", _selectedStructureID));
                             _structureIDsCollection.Add(selectedStructureID); //Planned to be used for binding of ComboBoxes for structures in the ListView
-
                             //Add desired data from the Structure object to our collection of StructureVieModels
                             _structureViewModelCollection.Add(new StructureViewModel(
                                 new StructureModel(_selectedStructureID, _selectedStructureDICOMtype,
                                 _selectedStructureColor, _selectedStructureIsHighResolution, _selectedStructureVolume)));
+                            
                         });
-
+                        _workIsInProgress = false;
                     }
                     //Sort structures in the list by their ID
                     Logger.LogInfo("Structures have been populated");
                 });
-                _workIsInProgress = false;
+                
             }
             catch (Exception exception)
             {
@@ -571,18 +576,18 @@ namespace PD_ScriptTemplate.ViewModels
                     {
 
                         //This method catches the ListViewModel based on the sender object
-                        Logger.LogInfo(string.Format("   Deleting the structure: {0} from the ListView", _listViewItemObjectToDelete.StructureID));
+                        Logger.LogInfo(string.Format("...Deleting the structure: {0} from the ListView", _listViewItemObjectToDelete.StructureID));
                         if (_structureViewModelCollection.Count > 1) _structureViewModelCollection.Remove(_listViewItemObjectToDelete);
 
                         else Logger.LogInfo(string.Format(
-                            "   The structure: {0} has not been deleted from the ListView as it is the last structure in it",
+                            "...The structure: {0} has not been deleted from the ListView as it is the last structure in it",
                              _listViewItemObjectToDelete.StructureID));
                     });
 
 
                     else
                     {
-                        Logger.LogInfo("   selectedStructureViewModel has not been selected. Delete command has been ignored");
+                        Logger.LogInfo("...StructureViewModel has not been selected. Delete command has been ignored");
                     }
                 });
             }
@@ -606,8 +611,6 @@ namespace PD_ScriptTemplate.ViewModels
             {
                 await esapiWorker.AsyncRunStructureContext((_patient, _structureSet) =>
                 {
-                    _workIsInProgress = false;
-                    Task.Delay(1000);//It's a bad solution. Planned to be replaced with a model window
                     var selectedStructureSet = _patient.StructureSets.FirstOrDefault(x => x.Id == _currentStructureSetId);
                     var selectedStructure = selectedStructureSet.Structures.FirstOrDefault();
                     #region private variables to be used in AsyncRunStructureContext
@@ -621,7 +624,7 @@ namespace PD_ScriptTemplate.ViewModels
                     userInterface.Invoke(() =>
                     {
                         
-                        Logger.LogInfo(string.Format("   Populating structure:{0}", _selectedStructureID));
+                        Logger.LogInfo(string.Format("...Adding a random structure structure:{0}", _selectedStructureID));
 
                         //Add desired data from the Structure object to our collection of StructureVieModels
                         _structureViewModelCollection.Add(new StructureViewModel(
@@ -629,7 +632,6 @@ namespace PD_ScriptTemplate.ViewModels
                             _selectedStructureColor, _selectedStructureIsHighResolution, _selectedStructureVolume)));
                         
                     });
-                    _workIsInProgress = false;
                 });
             }
             catch (Exception exception)
@@ -660,8 +662,10 @@ namespace PD_ScriptTemplate.ViewModels
                     {
                         userInterface.Invoke(() =>
                         {
-                            try { _allStructureIDs.Add(structureID); }
-                            catch { Logger.LogWarning(string.Format("   Unable to add structureID of the structure {0} to the collection of structureIDs", structureID)); }
+                            try { _allStructureIDs.Add(structureID); 
+                                Logger.LogInfo(string.Format("...Structure: {0} has been added to the collection of all available structure IDs", structureID)); }
+
+                            catch { Logger.LogWarning(string.Format("...Unable to add structureID of the structure {0} to the collection of structureIDs", structureID)); }
                         });
                     }
                     _structureIDsCollection = _allStructureIDs;
@@ -688,32 +692,32 @@ namespace PD_ScriptTemplate.ViewModels
 
             try
             {
-                //Valiables to use later in this method
-                
-
                 //Get all structures for the structure set from context and add them into the StructureViewModel collection of StructureModels
                 await esapiWorker.AsyncRunStructureContext((_patient, _structureSet) =>
                 {
                     var _selectedStrucutreSet = _patient.StructureSets.FirstOrDefault(x => x.Id == currentStructureSetId);
                     foreach (var structureViewModel in _structureViewModelCollection)
                     {
-                        //foreach (var selectedStructureID in _selectedStrucutreSet.Structures.Select(x => x.Id))
+                        
                         if (structureViewModel.StructureID == newValue)
                         {
+                            Logger.LogInfo(string.Format("...Reading structureViewModel for the structure: {0}", newValue));
                             var _selectedStructure = _selectedStrucutreSet.Structures.FirstOrDefault(x => string.Equals(x.Id, structureViewModel.StructureID, StringComparison.OrdinalIgnoreCase));
                             var _selectedStructureID = _selectedStructure.Id;
                             var _selectedStructureDICOMtype = _selectedStructure.DicomType;
                             var _selectedStructureColor = _selectedStructure.Color;
                             var _selectedStructureIsHighRes = _selectedStructure.IsHighResolution;
                             var _selectedStructureVolume = _selectedStructure.Volume;
-
+                            
                             userInterface.Invoke(() => 
                             {
+                                Logger.LogInfo(string.Format("...Updating structureViewModel for the structure: {0} with data pulled from the structure: {1}", newValue, _selectedStructureID));
                                 var updatedStructureViewModel = new StructureViewModel(
                                     new StructureModel(
                                         _selectedStructureID, _selectedStructureDICOMtype, _selectedStructureColor, _selectedStructureIsHighRes, _selectedStructureVolume)
                                 );
 
+                                //This chunk of code is required to update all the properties in the list view item to show (structureViewModel)
                                 var structureViewModelType = structureViewModel.GetType();
                                 var updatedStructureViewModelType = updatedStructureViewModel.GetType();
 
@@ -735,10 +739,12 @@ namespace PD_ScriptTemplate.ViewModels
                             
                         }
                     }
-
+                   
                     // Sort structures in the list by their ID
                     Logger.LogInfo("Structure data has been updated in accordance with the selected StructureID");
                 });
+
+                
                 Logger.LogInfo("Checking if the margin, margin2, StructureToManipulate are valid for all StructureViewModels in the UI");
                 await esapiWorker.AsyncRunStructureContext((_patient, _structureSet) =>
                 {
@@ -757,10 +763,14 @@ namespace PD_ScriptTemplate.ViewModels
                             bool isStructure2Empty = !string.IsNullOrEmpty(structureViewModel.Structure2ToManipulateID);
                             Logger.LogInfo(string.Format("...Structure to Manipulate Id: {0} is defined as: {1}", structureViewModel.Structure2ToManipulateID, isStructure2Empty.ToString()));
 
-
                             _isButtonEnabled = isValidMargin && isValidMargin2 && isStructure2Empty;
 
-                            if (_isButtonEnabled == false) 
+                            if (structureViewModel.Operation == "ring" || structureViewModel.Operation == "PRV") 
+                            {
+                                _isButtonEnabled = isValidMargin && isValidMargin2;
+                            }
+
+                                if (_isButtonEnabled == false) 
                             { 
                                 Logger.LogInfo("...One of the parameters is false. Disabling the button");
                                 Logger.LogInfo(string.Format("...Margin={0} {1}, Margin2={2} {3}, structure to manipulate: {4} {5}",
@@ -779,8 +789,8 @@ namespace PD_ScriptTemplate.ViewModels
                                     ));
                             _isButtonEnabled = true;
                     }
-                        _workIsInProgress = false;
-                        Logger.LogInfo(".......................UPDATED..........................");
+                        
+                        Logger.LogInfo(".......................BUTTON UPDATED..........................");
                     });
                 });
                 
@@ -792,7 +802,7 @@ namespace PD_ScriptTemplate.ViewModels
                 MessageBox.Show(string.Format("{0}\r\n{1}\r\n{2}", exception.Message, exception.InnerException, exception.StackTrace));
             }
 
-            _workIsInProgress = false;
+            
         }
 
 
@@ -801,16 +811,20 @@ namespace PD_ScriptTemplate.ViewModels
         /// </summary>
         private async void CreateOptimizationStructures()
         {
+            Logger.LogInfo("");
+            Logger.LogInfo(".................................................");
             Logger.LogInfo("Called a method to create optimization structures");
-            _workIsInProgress = false;
-
+            Logger.LogInfo(".................................................");
+            Logger.LogInfo("");
+            _spinnerPhrase = "Generating optimization structures...";
+            _workIsInProgress = true;
             try
             {
                 await esapiWorker.AsyncRunStructureContext((_patient, _structureSet) =>
                 {
 
-                    
-                _patient.BeginModifications(); //Enable patient modifications
+                    Logger.LogInfo(string.Format("Enabling modifications for the selected patient: {0}", _patient.Id.ToString()));
+                    _patient.BeginModifications(); //Enable patient modifications
 
                     #region duplicate the structure set if desired
                     //Check if user intended to create structures on the duplicated structure set
@@ -819,10 +833,10 @@ namespace PD_ScriptTemplate.ViewModels
                     if (_duplicateStructureSet==true) 
                     {
                         
-                        Logger.LogInfo("   ...Duplicating structure set");
+                        Logger.LogInfo("...Duplicating structure set");
                         
                         //Check if the duplicated structureSet ID is unique
-                        Logger.LogInfo("   ...Checking if the ID of duplicated structure set is unique");
+                        Logger.LogInfo("...Checking if the ID of duplicated structure set is unique");
                         for (int i = 1; i < 9; i++)
                         {
                             _duplicatedStructureSetId = _duplicatedStructureSetId.Substring(0, _duplicatedStructureSetId.Length - 1) + i.ToString();
@@ -830,12 +844,12 @@ namespace PD_ScriptTemplate.ViewModels
                             var check = _patient.StructureSets.FirstOrDefault(x => x.Id == _duplicatedStructureSetId);
                             if (check == null) break;
                         }
-                        Logger.LogInfo(string.Format("   ...Decided to use ID: {0}", _duplicatedStructureSetId));
+                        Logger.LogInfo(string.Format("...Decided to use ID: {0}", _duplicatedStructureSetId));
 
-                        Logger.LogInfo(string.Format("   ...Enagbling modifications for the patient: {0}", _patient.Id));
+                        Logger.LogInfo(string.Format("...Enagbling modifications for the patient: {0}", _patient.Id));
                         _duplicatedStructureSet = _structureSet.Image.CreateNewStructureSet(); //Create new structureSet
                         _duplicatedStructureSet.Id = _duplicatedStructureSetId; //Assign ss.Id
-                        Logger.LogInfo(string.Format("   ...Created structureSet with ID: ", _duplicatedStructureSetId));
+                        Logger.LogInfo(string.Format("...Created structureSet with ID: ", _duplicatedStructureSetId));
 
                         foreach (Structure structure in _structureSet.Structures) //Duplicate structures from one ss to another
                         {
@@ -845,25 +859,25 @@ namespace PD_ScriptTemplate.ViewModels
                             if (_DICOMtype == null || _DICOMtype == "") _DICOMtype = "CONTROL"; //If DICOM tag is empty, then assign it to "CONTROL"
 
                             Structure _duplicatedStructure = _duplicatedStructureSet.AddStructure(_DICOMtype, _structureId);
-                            Logger.LogInfo(string.Format("   ...Copied structureSet with ID: ", _structureId));
+                            Logger.LogInfo(string.Format("...Copied structureSet with ID: ", _structureId));
 
                             _duplicatedStructure.SegmentVolume = structure.SegmentVolume;
-                            Logger.LogInfo(string.Format("   ...Copied structure volume with ID: ", _structureId));
+                            Logger.LogInfo(string.Format("...Copied structure volume with ID: ", _structureId));
                         }
                     }
                         else { _duplicatedStructureSet = _patient.StructureSets.FirstOrDefault(x => x.Id ==_currentStructureSetId); _duplicatedStructureSetId = _duplicatedStructureSet.Id; }
                 
                     #endregion
 
-                Logger.LogInfo("   ...Connecting to the data in the UI");
+                Logger.LogInfo("Connecting to the data stored in the view model");
                 foreach (StructureViewModel structureViewModel in _structureViewModelCollection)
                     {
                     #region Define optimization structure ID
 
-                    Logger.LogInfo(string.Format("   ...Looking for the structure: {0} in the structure set: {1}", structureViewModel.StructureID, _duplicatedStructureSetId));
+                    Logger.LogInfo(string.Format("...Looking for the structure: {0} in the structure set: {1}", structureViewModel.StructureID, _duplicatedStructureSetId));
                     var _structureToManipulate1 = _duplicatedStructureSet.Structures.FirstOrDefault(x => x.Id == structureViewModel.StructureID);
 
-                    Logger.LogInfo(string.Format("   ...Looking for the structure: {0} in the structure set: {1}", structureViewModel.Structure2ToManipulateID, _duplicatedStructureSetId));
+                    Logger.LogInfo(string.Format("...Looking for the structure: {0} in the structure set: {1}", structureViewModel.Structure2ToManipulateID, _duplicatedStructureSetId));
                         
                         Structure _structureToManipulate2=null;
                         if (structureViewModel.Structure2ToManipulateID != null)
@@ -872,11 +886,11 @@ namespace PD_ScriptTemplate.ViewModels
                         }
 
                     //Create temporary structures for manipulations
-                    Logger.LogInfo("   ...Creating technical structure 'PDtoDel1'");
+                    Logger.LogInfo("...Creating technical structure 'PDtoDel1'");
                     Structure _structureToManipulate1operational1 = _duplicatedStructureSet.AddStructure("CONTROL", "PDtoDel1");
                     _structureToManipulate1operational1.SegmentVolume = _structureToManipulate1.Margin(0);
 
-                    Logger.LogInfo("   ...Creating technical structure 'PDtoDel2'");
+                    Logger.LogInfo("...Creating technical structure 'PDtoDel2'");
                     Structure _structureToManipulate1operational2 = _duplicatedStructureSet.AddStructure("CONTROL", "PDtoDel2");
                         if (_structureToManipulate2 != null) 
                         { 
@@ -885,40 +899,40 @@ namespace PD_ScriptTemplate.ViewModels
 
                     string structureToSaveID = "";
 
-                    Logger.LogInfo("   ...Defining structure ID to save");
+                    Logger.LogInfo("...Defining structure ID to save");
                     switch (structureViewModel.Operation)
                     {
                         case "+":
-                            Logger.LogInfo("   ...Case for ID is identified as '+'");
+                            Logger.LogInfo("...Case for ID is identified as '+'");
                             structureToSaveID = _structureToManipulate1.Id + "+" + _structureToManipulate2.Id;  
                             break;
                         case "PRV":
-                            Logger.LogInfo("   ...Case for ID is identified as 'PRV'");
-                            structureToSaveID = _structureToManipulate1.Id + "_PRV";
+                            Logger.LogInfo("...Case for ID is identified as 'PRV'");
+                            structureToSaveID = _structureToManipulate1.Id + "_PRV" + string.Format("{0}", Double.Parse(structureViewModel.Margin));
                                 break;
                         case "-":
-                            Logger.LogInfo("   ...Case for ID is identified as '-'");
+                            Logger.LogInfo("...Case for ID is identified as '-'");
                             structureToSaveID = _structureToManipulate1.Id + "-" + _structureToManipulate2.Id;
                                 break;
 
                         case "and":
-                            Logger.LogInfo("   ...Case for ID is identified as 'and'");
+                            Logger.LogInfo("...Case for ID is identified as 'and'");
                             structureToSaveID = _structureToManipulate1.Id + "_and_" + _structureToManipulate2.Id;
                                 break;
 
                         case "sub":
-                            Logger.LogInfo("   ...Case for ID is identified as 'sub'");
+                            Logger.LogInfo("...Case for ID is identified as 'sub'");
                             structureToSaveID = _structureToManipulate1.Id + "_sub_" + _structureToManipulate2.Id;
                                 break;
 
                         case "ring":
-                            Logger.LogInfo("   ...Case for ID is identified as 'ring'");
+                            Logger.LogInfo("...Case for ID is identified as 'ring'");
                             structureToSaveID = _structureToManipulate1.Id + "_ring";
                                 break;
                     }
                         if (structureToSaveID[0] != 'x') { structureToSaveID = "x" + structureToSaveID; }
                         structureToSaveID = structureToSaveID.Replace("__", "_");
-                        Logger.LogInfo(string.Format("   ...Decided to use structure ID: {0}", structureToSaveID));
+                        Logger.LogInfo(string.Format("...Decided to use structure ID: {0}", structureToSaveID));
 
                     //Check if the optimization structure ID is lass then 16 characters
                     if (structureToSaveID.Length > 16)
@@ -926,7 +940,7 @@ namespace PD_ScriptTemplate.ViewModels
                             //delete '_' if length is >16
                             if (structureToSaveID.Length > 16)
                             {
-                                Logger.LogInfo("   ...Structure ID is too long. Trying to resolve the issue getting rid of '_'");
+                                Logger.LogInfo("...Structure ID is too long. Trying to resolve the issue getting rid of '_'");
                                 string toDelete = "_";
                                 string updatedStructureToSaveID1 = "";
                                 for (int i = 0; i < structureToSaveID.Length; i++)
@@ -943,7 +957,7 @@ namespace PD_ScriptTemplate.ViewModels
                             //delete vowels if length is >16
                             if (structureToSaveID.Length > 16)
                             {
-                                Logger.LogInfo("   ...Structure ID is too long. Trying to resolve the issue getting rid of vowels");
+                                Logger.LogInfo("...Structure ID is too long. Trying to resolve the issue getting rid of vowels");
                                 //delete vowels
                                 string vowels = "AEIOUaeiou";
                                 string updatedStructureToSaveID = "";
@@ -962,7 +976,7 @@ namespace PD_ScriptTemplate.ViewModels
                             //delete numbers if length is still>16
                             if (structureToSaveID.Length > 16)
                             {
-                                Logger.LogInfo("   ...Structure ID is too long. Trying to resolve the issue getting rid of numbers");
+                                Logger.LogInfo("...Structure ID is too long. Trying to resolve the issue getting rid of numbers");
                                 string toDelete = "1234567890";
                                 string updatedStructureToSaveID1 = "";
                                 for (int i = 0; i < structureToSaveID.Length; i++)
@@ -979,22 +993,22 @@ namespace PD_ScriptTemplate.ViewModels
                             //delete excessive letters if length is still>16
                             if (structureToSaveID.Length > 16)
                         {
-                                Logger.LogInfo("   ...Structure ID is too long. Trying to resolve the issue getting rid of excessive letters");
+                                Logger.LogInfo("...Structure ID is too long. Trying to resolve the issue getting rid of excessive letters");
                                 int numberOfLettersToDelete = structureToSaveID.Length - 16;
                                 int numberOfLettersToKeep = structureToSaveID.Length - numberOfLettersToDelete;
                                 structureToSaveID = structureToSaveID.Substring(0, numberOfLettersToKeep);
                         }
                             
-                        Logger.LogInfo(string.Format("   ...Corrected structure ID is: {0}", structureToSaveID));
+                        Logger.LogInfo(string.Format("...Corrected structure ID is: {0}", structureToSaveID));
                     }
 
-                    Logger.LogInfo("   ...Checking if the structure ID is unique");
+                    Logger.LogInfo("...Checking if the structure ID is unique");
                     //Check if the structure name is unique
                     var _checkIfStructureIdUnique = _duplicatedStructureSet.Structures.FirstOrDefault(x => x.Id == structureToSaveID);
 
                     if (_checkIfStructureIdUnique != null)
                     {
-                        Logger.LogInfo("   ...The structure ID is not unique, correcting");
+                        Logger.LogInfo("...The structure ID is not unique, correcting");
                         for (int i = 1; i < 9; i++)
                         {
                             structureToSaveID = structureToSaveID.Substring(0, structureToSaveID.Length - 1) + i.ToString();
@@ -1002,58 +1016,60 @@ namespace PD_ScriptTemplate.ViewModels
                             var check = _duplicatedStructureSet.Structures.FirstOrDefault(x => x.Id == structureToSaveID);
                             if (check == null) break;
                         }
-                        Logger.LogInfo(string.Format("   ...Corrected structure ID is: {0}", structureToSaveID));
+                        Logger.LogInfo(string.Format("...Corrected structure ID is: {0}", structureToSaveID));
                     }
                     #endregion
+
                     #region Create the optimization structure and define its volume
-                    Logger.LogInfo(string.Format("   ...Creating structure to save with ID: {0} in the structure set:{1}", structureToSaveID, _duplicatedStructureSet.Id));
+                    Logger.LogInfo(string.Format("Creating structure to save with ID: {0} in the structure set:{1}", structureToSaveID, _duplicatedStructureSet.Id));
                     var _structureToSave = _duplicatedStructureSet.AddStructure("CONTROL", structureToSaveID); //Assign the structure DICOM tag as "CONTROL" by default
 
-                    Logger.LogInfo("   ...Checking if one of the structures for operations is in high resolution");
+                    Logger.LogInfo("Checking if one of the structures for operations is in high resolution");
                     //Check if at least one structure is in high resolution
                     if (_structureToManipulate1operational1.IsHighResolution == true || _structureToManipulate1operational2.IsHighResolution == true)
                     {
-                        Logger.LogInfo("   ...Detected a structure in high resolution");
+                        Logger.LogInfo("...Detected a structure in high resolution");
                             if (_structureToManipulate1operational1.CanConvertToHighResolution() == true)
                             {
-                                _structureToManipulate1operational1.ConvertToHighResolution(); Logger.LogInfo(string.Format("   ...Converting structure:{0} in high resolution", _structureToManipulate1operational1.Id));
+                                _structureToManipulate1operational1.ConvertToHighResolution(); Logger.LogInfo(string.Format("...Converting structure:{0} in high resolution", _structureToManipulate1operational1.Id));
                             }
 
                             if (_structureToManipulate1operational2.CanConvertToHighResolution() == true)
                             {
-                                _structureToManipulate1operational2.ConvertToHighResolution(); Logger.LogInfo(string.Format("   ...Converting structure:{0} in high resolution", _structureToManipulate1operational2.Id));
+                                _structureToManipulate1operational2.ConvertToHighResolution(); Logger.LogInfo(string.Format("...Converting structure:{0} in high resolution", _structureToManipulate1operational2.Id));
                             }
 
                             if (_structureToSave.CanConvertToHighResolution() == true)
                             {
-                                _structureToSave.ConvertToHighResolution(); Logger.LogInfo(string.Format("   ...Converting structure:{0} in high resolution", _structureToSave.Id));
+                                _structureToSave.ConvertToHighResolution(); Logger.LogInfo(string.Format("...Converting structure:{0} in high resolution", _structureToSave.Id));
                             }
                         }
-                    else Logger.LogInfo("   ...No structures defined for manipulations are in high resolution");
+                    else Logger.LogInfo("No structures defined for manipulations are in high resolution");
 
-                    Logger.LogInfo("   ...Reading Margin");
+                    Logger.LogInfo("Reading Margin");
                     var margin = Double.Parse(structureViewModel.Margin);
                     Logger.LogInfo(string.Format("   ...Margin={0}mm", margin.ToString()));
 
-                    Logger.LogInfo("   ...Reading Margin2");
+                    Logger.LogInfo("Reading Margin2");
                     var margin2 = Double.Parse(structureViewModel.Margin2);
                     Logger.LogInfo(string.Format("   ...Margin2={0}mm", margin2.ToString()));
 
-                    Logger.LogInfo("   ...Reading instructions for the manipulation");
+                    Logger.LogInfo("Reading instructions for the manipulation");
                     switch (structureViewModel.Operation)
                     {
                         case "+":
                             Logger.LogInfo(string.Format(
-                                "   ...Manipulation defined as '+'. Combining volumes of the structure: {0} and the structure: {1} with the margin={2}mm",
+                                "...Manipulation defined as '+'. Combining volumes of the structure: {0} and the structure: {1} with the margin={2}mm",
                                      _structureToManipulate1.Id, _structureToManipulate2, margin));
 
                                 try 
                                 { 
                                     _structureToSave.SegmentVolume = _structureToManipulate1operational1.Or(_structureToManipulate1operational2);
                                     _structureToSave.SegmentVolume = _structureToSave.Margin(margin);
-
+                                    Logger.LogInfo("...........................................................");
+                                    Logger.LogInfo("..........................SUCCESS..........................");
                                     Logger.LogInfo(string.Format
-                                        ("   ...Structure: {0} volume={1}cc has been created as a combination of " +
+                                        ("Structure: {0} volume={1}cc has been created as a combination of " +
                                         "the structure: {2} volume={3}cc " +
                                         "and the structure: {4} volume={5}cc with the margin={6}mm", 
                                         _structureToSave.Id, Math.Round(_structureToSave.Volume,2),
@@ -1061,8 +1077,9 @@ namespace PD_ScriptTemplate.ViewModels
                                         _structureToManipulate2.Id, Math.Round(_structureToManipulate2.Volume, 2),
                                         margin.ToString()
                                         ));
-                                    Logger.LogInfo("");
-                                    Logger.LogInfo("");
+                                    Logger.LogInfo("...........................................................");
+                                    Logger.LogInfo("...........................................................");
+
                                 } 
                                 catch (Exception exception)
                                 {
@@ -1076,7 +1093,7 @@ namespace PD_ScriptTemplate.ViewModels
 
                             case "PRV":
                                 Logger.LogInfo(string.Format(
-                                "   ...Manipulation defined as 'PRV'. Creating a PRV with ID: {0} from the structure: {1} with the margin={2}", 
+                                "...Manipulation defined as 'PRV'. Creating a PRV with ID: {0} from the structure: {1} with the margin={2}", 
                                 _structureToSave.Id, _structureToManipulate1.Id, margin.ToString()
                                 ));
                                 Logger.LogInfo("");
@@ -1085,15 +1102,16 @@ namespace PD_ScriptTemplate.ViewModels
                                 try 
                                 { 
                                     _structureToSave.SegmentVolume = _structureToManipulate1operational1.Margin(margin);
-
+                                    Logger.LogInfo("...........................................................");
+                                    Logger.LogInfo("..........................SUCCESS..........................");
                                     Logger.LogInfo(string.Format(
-                                "   ...PRV has been created as a structure: {0} volume={1}cc by expanding the structure: {2} volume={3}cc with the margin={4}mm",
+                                "PRV has been created as a structure: {0} volume={1}cc by expanding the structure: {2} volume={3}cc with the margin={4}mm",
                                 _structureToSave.Id, Math.Round(_structureToSave.Volume,2),
                                 _structureToManipulate1.Id, Math.Round(_structureToManipulate1.Volume,2),
                                 margin.ToString()
                                 ));
-                                    Logger.LogInfo("");
-                                    Logger.LogInfo("");
+                                    Logger.LogInfo("...........................................................");
+                                    Logger.LogInfo("...........................................................");
                                 }
 
                                 catch (Exception exception)
@@ -1108,23 +1126,25 @@ namespace PD_ScriptTemplate.ViewModels
 
                             case "-":
                                 Logger.LogInfo(string.Format(
-                                "   ...Manipulation defined as '-'. Substracting the structure: {0} from the structure: {1} whith the margin={2}mm",
+                                "...Manipulation defined as '-'. Substracting the structure: {0} from the structure: {1} whith the margin={2}mm",
                                 _structureToManipulate2.Id, _structureToManipulate1.Id, margin
                                 ));
                                 try
                                 {
                                     _structureToManipulate1operational2.SegmentVolume = _structureToManipulate1operational2.Margin(margin);
                                     _structureToSave.SegmentVolume = _structureToManipulate1operational1.Sub(_structureToManipulate1operational2);
-
-                                    Logger.LogInfo(string.Format("   ...structure: {0} volume={1}cc has been created by " +
+                                    Logger.LogInfo("...........................................................");
+                                    Logger.LogInfo("..........................SUCCESS..........................");
+                                    Logger.LogInfo(string.Format("Structure: {0} volume={1}cc has been created by " +
                                         "substracting the structure {2} volume={3}cc with the margin={4}mm from the structure: {5} volume={6}mm",
                                         _structureToSave.Id, Math.Round(_structureToSave.Volume,2),
                                         _structureToManipulate2.Id, Math.Round(_structureToManipulate2.Volume, 2),
                                         margin.ToString(),
                                         _structureToManipulate1.Id, Math.Round(_structureToManipulate1.Volume,2)
+
                            ));
-                                    Logger.LogInfo("");
-                                    Logger.LogInfo("");
+                                    Logger.LogInfo("...........................................................");
+                                    Logger.LogInfo("...........................................................");
                                 }
                                 catch (Exception exception)
                                 {
@@ -1139,23 +1159,24 @@ namespace PD_ScriptTemplate.ViewModels
 
                             case "and":
                                 Logger.LogInfo(string.Format(
-                                "   ...Manipulation defined as 'and'. Defining the intersection of the structures: {0} and {1} with the margin={2}mm",
+                                "...Manipulation defined as 'and'. Defining the intersection of the structures: {0} and {1} with the margin={2}mm",
                                 _structureToManipulate2.Id, _structureToManipulate1.Id, margin
                                 ));
                                 try
                                 {
                                     _structureToSave.SegmentVolume = _structureToManipulate1operational1.And(_structureToManipulate1operational2);
                                     _structureToSave.SegmentVolume = _structureToSave.Margin(0);
-
-                                    Logger.LogInfo(string.Format("   ...structure: {0} volume={1}cc has been created by " +
+                                    Logger.LogInfo("...........................................................");
+                                    Logger.LogInfo("..........................SUCCESS..........................");
+                                    Logger.LogInfo(string.Format("Structure: {0} volume={1}cc has been created by " +
                                         "combining the structure {2} volume={3}cc with the structure: {4} volume={5}mm with the margin={6}mm",
                                         _structureToSave.Id, Math.Round(_structureToSave.Volume, 2),
                                         _structureToManipulate1.Id, Math.Round(_structureToManipulate1.Volume, 2),
                                         _structureToManipulate2.Id, Math.Round(_structureToManipulate2.Volume, 2),
                                         margin.ToString()
                            ));
-                                    Logger.LogInfo("");
-                                    Logger.LogInfo("");
+                                    Logger.LogInfo("...........................................................");
+                                    Logger.LogInfo("...........................................................");
                                 }
                                 catch (Exception exception)
                                 {
@@ -1170,7 +1191,7 @@ namespace PD_ScriptTemplate.ViewModels
 
                             case "not":
                                 Logger.LogInfo(string.Format(
-                                "   ...Manipulation defined as 'not'. Defining the volume that includes everynting but the intersection of the structures: {0} and {1} with the margin={2}mm",
+                                "...Manipulation defined as 'not'. Defining the volume that includes everynting but the intersection of the structures: {0} and {1} with the margin={2}mm",
                                 _structureToManipulate2.Id, _structureToManipulate1.Id, margin
                                 ));
 
@@ -1178,16 +1199,17 @@ namespace PD_ScriptTemplate.ViewModels
                                 {
                                     _structureToSave.SegmentVolume = _structureToManipulate1operational1.Xor(_structureToManipulate1operational2);
                                     _structureToSave.SegmentVolume = _structureToSave.Margin(margin);
-
-                                    Logger.LogInfo(string.Format("   ...structure: {0} volume={1}cc has been created by " +
+                                    Logger.LogInfo("...........................................................");
+                                    Logger.LogInfo("..........................SUCCESS..........................");
+                                    Logger.LogInfo(string.Format("Structure: {0} volume={1}cc has been created by " +
                                         "substracting the intersection of the structure {2} volume={3}cc with the structure: {4} volume={5}mm with the margin={6}mm",
                                         _structureToSave.Id, Math.Round(_structureToSave.Volume, 2),
                                         _structureToManipulate1.Id, Math.Round(_structureToManipulate1.Volume, 2),
                                         _structureToManipulate2.Id, Math.Round(_structureToManipulate2.Volume, 2),
                                         margin.ToString()
                            ));
-                                    Logger.LogInfo("");
-                                    Logger.LogInfo("");
+                                    Logger.LogInfo("...........................................................");
+                                    Logger.LogInfo("...........................................................");
                                 }
                                 catch (Exception exception)
                                 {
@@ -1201,7 +1223,7 @@ namespace PD_ScriptTemplate.ViewModels
 
                             case "ring":
                                 Logger.LogInfo(string.Format(
-                                "   ...Manipulation defined as 'ring'. Creating a ring with ID: {0} from the structure: {1} with the margin={2}mm and inner margin of={3}mm",
+                                "...Manipulation defined as 'ring'. Creating a ring with ID: {0} from the structure: {1} with the margin={2}mm and inner margin of={3}mm",
                                 _structureToSave.Id, _structureToManipulate1.Id, margin.ToString(), margin2.ToString()
                                 ));
 
@@ -1210,15 +1232,16 @@ namespace PD_ScriptTemplate.ViewModels
                                     _structureToSave.SegmentVolume = _structureToManipulate1operational1.Margin(margin);
                                     _structureToManipulate1operational1.SegmentVolume = _structureToManipulate1operational1.Margin(margin2);
                                     _structureToSave.SegmentVolume = _structureToSave.Sub(_structureToManipulate1operational1);
-
-                                    Logger.LogInfo(string.Format("   ...structure: {0} volume={1}cc has been created by " +
+                                    Logger.LogInfo("...........................................................");
+                                    Logger.LogInfo("..........................SUCCESS..........................");
+                                    Logger.LogInfo(string.Format("Structure: {0} volume={1}cc has been created by " +
                                         "creating a ring from the structure {2} volume={3}cc with the margin={4}mm and inner margin={5}mm",
                                         _structureToSave.Id, Math.Round(_structureToSave.Volume, 2),
                                         _structureToManipulate1.Id, Math.Round(_structureToManipulate1.Volume, 2),
                                         margin.ToString(), margin2.ToString()
                                         ));
-                                    Logger.LogInfo("");
-                                    Logger.LogInfo("");
+                                    Logger.LogInfo("...........................................................");
+                                    Logger.LogInfo("...........................................................");
                                 }
                                 catch (Exception exception)
                                 {
@@ -1232,7 +1255,10 @@ namespace PD_ScriptTemplate.ViewModels
                         }
 
                         //Remove temporary structures
+                        Logger.LogInfo(string.Format("Removing technical structure :{0}", _structureToManipulate1operational1.Id));
                         _duplicatedStructureSet.RemoveStructure(_structureToManipulate1operational1);
+
+                        Logger.LogInfo(string.Format("Removing technical structure :{0}", _structureToManipulate1operational2.Id));
                         _duplicatedStructureSet.RemoveStructure(_structureToManipulate1operational2);
                         #endregion
                     }
@@ -1248,16 +1274,34 @@ namespace PD_ScriptTemplate.ViewModels
             GetAllStructureIDsFromStructureSet();
             AddStructureToTheListView();
             PopulateStructuresDataToTheCollection();
+            Logger.LogInfo(".................................................");
+            Logger.LogInfo("....Optimization structure have been created.....");
+            Logger.LogInfo(".................................................");
             _workIsInProgress = false;
+            _spinnerPhrase = "Loading";
         }
 
         ///<summary>
         ///This command is used to shut down the application
         /// </summary>
-        private void Exit() { VMS.TPS.Script.mainWindow.Close(); }
+        private void Exit() 
+        {
+            Logger.LogInfo("....Called a command to shut down the script.....");
+            Script.mainWindow?.Close(); 
+        }
+
+
 
         #endregion
         #region public methods
+        /// <summary>
+        /// This method is used to dispose current view model. Which is required to unsubscribe from the supscriptions
+        /// </summary>
+
+        public void Dispose()
+        {
+            Communicator.StringChanged -= Communicator_UpdateCollectionOfViewModelsWhenStructureIDchanged;
+        }
         #endregion
     }
 }

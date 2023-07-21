@@ -69,7 +69,6 @@ namespace PD_ScriptTemplate.ViewModels
         public StructureViewModel(StructureModel structureModel)
         {
             _structureModel = structureModel ?? throw new ArgumentNullException(nameof(structureModel));
-            Communicator.PublishStringChanged(null);
         }
 
         
