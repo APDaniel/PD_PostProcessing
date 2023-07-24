@@ -1004,7 +1004,7 @@ namespace PD_ScriptTemplate.ViewModels
 
                     Logger.LogInfo("...Checking if the structure ID is unique");
                     //Check if the structure name is unique
-                    var _checkIfStructureIdUnique = _duplicatedStructureSet.Structures.FirstOrDefault(x => x.Id == structureToSaveID);
+                    var _checkIfStructureIdUnique = _duplicatedStructureSet.Structures.FirstOrDefault(x => x.Id.ToLower() == structureToSaveID.ToLower());
 
                     if (_checkIfStructureIdUnique != null)
                     {
@@ -1013,7 +1013,7 @@ namespace PD_ScriptTemplate.ViewModels
                         {
                             structureToSaveID = structureToSaveID.Substring(0, structureToSaveID.Length - 1) + i.ToString();
 
-                            var check = _duplicatedStructureSet.Structures.FirstOrDefault(x => x.Id == structureToSaveID);
+                            var check = _duplicatedStructureSet.Structures.FirstOrDefault(x => x.Id.ToLower() == structureToSaveID.ToLower());
                             if (check == null) break;
                         }
                         Logger.LogInfo(string.Format("...Corrected structure ID is: {0}", structureToSaveID));
