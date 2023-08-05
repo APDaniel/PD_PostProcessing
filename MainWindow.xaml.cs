@@ -1,5 +1,4 @@
-﻿using PD_ScriptTemplate.ViewModels;
-using System.Windows;
+﻿using System.Windows;
 
 namespace PD_ScriptTemplate
 {

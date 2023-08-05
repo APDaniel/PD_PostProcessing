@@ -1,7 +1,4 @@
-﻿using PD_ScriptTemplate.Helpers;
-using PD_ScriptTemplate.ViewModels;
-using System;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 

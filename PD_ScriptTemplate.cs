@@ -17,7 +17,7 @@ namespace VMS.TPS
 {
     public class Script // This is the script that will be called by Eclipse. It is referenced by PD_PluginTester
     {
-        PrimaryMainViewModel mainViewModel = null;
+        Structure3DViewerViewModel mainViewModel = null;
 
         public static ScriptWindow mainWindow;
         public Script()
@@ -39,7 +39,7 @@ namespace VMS.TPS
         /// </summary>
         private void InititializeAndStartMainWindow(EsapiWorker esapiWorker)
         {
-            mainViewModel = new PrimaryMainViewModel(esapiWorker);
+            mainViewModel = new Structure3DViewerViewModel(esapiWorker);
             Logger.LogInfo("MainViewModel set");
 
             //Instead of hooking DataContext to one specific ViewModel, we use a MainViewModel which allows navigation between different View Models.
@@ -87,7 +87,7 @@ namespace VMS.TPS
             RunOnNewStaThread(() => 
             { 
                 InititializeAndStartMainWindow(esapiWorker);
-                mainViewModel.Dispose();
+                //mainViewModel.Dispose();
                 frame.Continue = false; });
             Logger.LogInfo("New thread started");
             

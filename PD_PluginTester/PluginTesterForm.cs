@@ -26,20 +26,20 @@ namespace PluginTester
 
         public PluginTesterForm()
         {
-            InitializeComponent(); // This is the entry point to the standalone app that you will use to debug your script (I've called it TestScript in this example)
+            InitializeComponent(); // This is the entry point to the standalone app that you will use to debug your script
             app = VMS.TPS.ESAPIApplication.Instance; // instantiate the ESAPI context
 
             // Can use this to seed the form if you have a standard test patient.
-            textBox_PID.Text = "CN_RP_eso12";
-            textBox_SSID.Text = "CT_07May2021";
-            textBox_planId.Text = "eso_RP12";
+            textBox_PID.Text = "CN_Pro_PD_1";
+            textBox_SSID.Text = "CT_05Jul2023";
+            textBox_planId.Text = "P1_proN";
             textBox_CourseID.Text = "Course1";
         }
 
 
         private void InitializeAndStartMainWindow(EsapiWorker esapiWorker)
         {
-            var mainViewModel = new PrimaryMainViewModel(esapiWorker);
+            var mainViewModel = new Structure3DViewerViewModel(esapiWorker);
             try
             {
                 var mainWindow = new ScriptWindow() { DataContext = mainViewModel};

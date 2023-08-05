@@ -828,42 +828,11 @@ namespace PD_ScriptTemplate.ViewModels
 
                     #region duplicate the structure set if desired
                     //Check if user intended to create structures on the duplicated structure set
-                    StructureSet _duplicatedStructureSet;
+                    StructureSet _duplicatedStructureSet=null;
                     var _duplicatedStructureSetId = "Auto0";
                     if (_duplicateStructureSet==true) 
                     {
-                        
-                        Logger.LogInfo("...Duplicating structure set");
-                        
-                        //Check if the duplicated structureSet ID is unique
-                        Logger.LogInfo("...Checking if the ID of duplicated structure set is unique");
-                        for (int i = 1; i < 9; i++)
-                        {
-                            _duplicatedStructureSetId = _duplicatedStructureSetId.Substring(0, _duplicatedStructureSetId.Length - 1) + i.ToString();
-
-                            var check = _patient.StructureSets.FirstOrDefault(x => x.Id == _duplicatedStructureSetId);
-                            if (check == null) break;
-                        }
-                        Logger.LogInfo(string.Format("...Decided to use ID: {0}", _duplicatedStructureSetId));
-
-                        Logger.LogInfo(string.Format("...Enagbling modifications for the patient: {0}", _patient.Id));
-                        _duplicatedStructureSet = _structureSet.Image.CreateNewStructureSet(); //Create new structureSet
-                        _duplicatedStructureSet.Id = _duplicatedStructureSetId; //Assign ss.Id
-                        Logger.LogInfo(string.Format("...Created structureSet with ID: ", _duplicatedStructureSetId));
-
-                        foreach (Structure structure in _structureSet.Structures) //Duplicate structures from one ss to another
-                        {
-                            var _DICOMtype = structure.DicomType;
-                            var _structureId = structure.Id;
-
-                            if (_DICOMtype == null || _DICOMtype == "") _DICOMtype = "CONTROL"; //If DICOM tag is empty, then assign it to "CONTROL"
-
-                            Structure _duplicatedStructure = _duplicatedStructureSet.AddStructure(_DICOMtype, _structureId);
-                            Logger.LogInfo(string.Format("...Copied structureSet with ID: ", _structureId));
-
-                            _duplicatedStructure.SegmentVolume = structure.SegmentVolume;
-                            Logger.LogInfo(string.Format("...Copied structure volume with ID: ", _structureId));
-                        }
+                        DuplicateStructureSetHelper.DuplicateStructureSet(_patient, _structureSet, _duplicatedStructureSet, _duplicatedStructureSetId);
                     }
                         else { _duplicatedStructureSet = _patient.StructureSets.FirstOrDefault(x => x.Id ==_currentStructureSetId); _duplicatedStructureSetId = _duplicatedStructureSet.Id; }
                 
@@ -930,94 +899,14 @@ namespace PD_ScriptTemplate.ViewModels
                             structureToSaveID = _structureToManipulate1.Id + "_ring";
                                 break;
                     }
+                        
                         if (structureToSaveID[0] != 'x') { structureToSaveID = "x" + structureToSaveID; }
                         structureToSaveID = structureToSaveID.Replace("__", "_");
                         Logger.LogInfo(string.Format("...Decided to use structure ID: {0}", structureToSaveID));
 
-                    //Check if the optimization structure ID is lass then 16 characters
-                    if (structureToSaveID.Length > 16)
-                    {
-                            //delete '_' if length is >16
-                            if (structureToSaveID.Length > 16)
-                            {
-                                Logger.LogInfo("...Structure ID is too long. Trying to resolve the issue getting rid of '_'");
-                                string toDelete = "_";
-                                string updatedStructureToSaveID1 = "";
-                                for (int i = 0; i < structureToSaveID.Length; i++)
-                                {
-                                    if (!toDelete.Contains(structureToSaveID[i]))
-                                    { updatedStructureToSaveID1 += structureToSaveID[i]; };
-                                }
-                                if (updatedStructureToSaveID1.Length > 1)
-                                {
-                                    structureToSaveID = updatedStructureToSaveID1;
-                                }
-                            }
+                        //Check if the optimization structure ID is lass then 16 characters
+                        structureToSaveID=StructureUniqueIdHelper.CheckIfTheStructureIDisUnique(structureToSaveID, _duplicatedStructureSet);
 
-                            //delete vowels if length is >16
-                            if (structureToSaveID.Length > 16)
-                            {
-                                Logger.LogInfo("...Structure ID is too long. Trying to resolve the issue getting rid of vowels");
-                                //delete vowels
-                                string vowels = "AEIOUaeiou";
-                                string updatedStructureToSaveID = "";
-                                for (int i = 0; i < structureToSaveID.Length; i++)
-                                {
-                                    if (!vowels.Contains(structureToSaveID[i]))
-                                    { updatedStructureToSaveID += structureToSaveID[i]; };
-                                }
-                                if (updatedStructureToSaveID.Length > 1)
-                                {
-                                    structureToSaveID = updatedStructureToSaveID;
-                                }
-                            }
-                            
-
-                            //delete numbers if length is still>16
-                            if (structureToSaveID.Length > 16)
-                            {
-                                Logger.LogInfo("...Structure ID is too long. Trying to resolve the issue getting rid of numbers");
-                                string toDelete = "1234567890";
-                                string updatedStructureToSaveID1 = "";
-                                for (int i = 0; i < structureToSaveID.Length; i++)
-                                {
-                                    if (!toDelete.Contains(structureToSaveID[i]))
-                                    { updatedStructureToSaveID1 += structureToSaveID[i]; };
-                                }
-                                if (updatedStructureToSaveID1.Length > 1)
-                                {
-                                    structureToSaveID = updatedStructureToSaveID1;
-                                }
-                            }
-
-                            //delete excessive letters if length is still>16
-                            if (structureToSaveID.Length > 16)
-                        {
-                                Logger.LogInfo("...Structure ID is too long. Trying to resolve the issue getting rid of excessive letters");
-                                int numberOfLettersToDelete = structureToSaveID.Length - 16;
-                                int numberOfLettersToKeep = structureToSaveID.Length - numberOfLettersToDelete;
-                                structureToSaveID = structureToSaveID.Substring(0, numberOfLettersToKeep);
-                        }
-                            
-                        Logger.LogInfo(string.Format("...Corrected structure ID is: {0}", structureToSaveID));
-                    }
-
-                    Logger.LogInfo("...Checking if the structure ID is unique");
-                    //Check if the structure name is unique
-                    var _checkIfStructureIdUnique = _duplicatedStructureSet.Structures.FirstOrDefault(x => x.Id.ToLower() == structureToSaveID.ToLower());
-
-                    if (_checkIfStructureIdUnique != null)
-                    {
-                        Logger.LogInfo("...The structure ID is not unique, correcting");
-                        for (int i = 1; i < 9; i++)
-                        {
-                            structureToSaveID = structureToSaveID.Substring(0, structureToSaveID.Length - 1) + i.ToString();
-
-                            var check = _duplicatedStructureSet.Structures.FirstOrDefault(x => x.Id.ToLower() == structureToSaveID.ToLower());
-                            if (check == null) break;
-                        }
-                        Logger.LogInfo(string.Format("...Corrected structure ID is: {0}", structureToSaveID));
-                    }
                     #endregion
 
                     #region Create the optimization structure and define its volume

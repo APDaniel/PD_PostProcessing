@@ -681,7 +681,7 @@
             
                 <ListView x:Name="StructuresListView" 
                           ScrollViewer.CanContentScroll="True"  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                          ScrollViewer.VerticalScrollBarVisibility="Auto" BorderBrush="Transparent"
+                          ScrollViewer.VerticalScrollBarVisibility="Visible" BorderBrush="Transparent"
                           ItemsSource="{Binding structuresIEnumerable, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
                           SelectedItem="{Binding selectedStructureListViewItem, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                           IsSynchronizedWithCurrentItem="True" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"

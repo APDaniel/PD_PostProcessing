@@ -1,5 +1,6 @@
 ﻿using PropertyChanged;
 using System.ComponentModel;
+using System.Windows.Threading;
 
 namespace PD_ScriptTemplate.ViewModels
 {
