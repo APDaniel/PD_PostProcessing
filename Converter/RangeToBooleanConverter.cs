@@ -12,7 +12,7 @@ namespace PD_ScriptTemplate.Converter
             {
                 if (int.TryParse(stringValue, out int intValue))
                 {
-                    return intValue >= -50 && intValue <= 50;
+                    return intValue > 0 && intValue <= 5;
                 }
                 return false;
             }

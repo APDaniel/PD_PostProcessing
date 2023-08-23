@@ -64,19 +64,19 @@ namespace PD_ScriptTemplate.Helpers
         public SegmentVolume MoveStructure() 
         {
             //Create a placeholder structure
-            Logger.LogInfo("Creating a placeholder structure");
+            Logger.LogInfo("...Creating a placeholder structure");
             Structure placeholder = structureSet.AddStructure("CONTROL", StructureUniqueIdHelper.CheckIfTheStructureIDisUnique("PDtoDel", structureSet));
-            Logger.LogInfo(string.Format($"The placeholder structure: '{placeholder.Id}' has been created"));
+            Logger.LogInfo(string.Format($"...The placeholder structure: '{placeholder.Id}' has been created"));
 
             //Call a method to define volume for the placeholder and make a high resolution check
             if (structureToMove.IsHighResolution == true)
             {
                 placeholder.ConvertToHighResolution();
-                Logger.LogInfo(string.Format($"Converting: '{placeholder.Id}' into high resolution"));
+                Logger.LogInfo(string.Format($"...Converting: '{placeholder.Id}' into high resolution"));
             }
 
             //Loop through contours and move each of them on the pre-defined value of displacement
-            Logger.LogInfo("Entering the loop to move contours for the placegopler");
+            Logger.LogInfo("...Entering the loop to move contours for the placeholder");
             foreach (var contour in Contours)
             {
                 var contourOnImagePlane = contour.Value;

@@ -39,7 +39,10 @@ namespace PD_ScriptTemplate.Helpers
                 //Check if the desired structure is in high resolution. If so, convert the new structure into high resolution too
                 if (structureToCopy.IsHighResolution == true)
                 {
-                    try { newStructure.ConvertToHighResolution(); }
+                    try { 
+                    if (newStructure.CanConvertToHighResolution()==true) 
+                        newStructure.ConvertToHighResolution(); 
+                }
                     catch (Exception exception)
                     {
                         // Log any appeared issues
@@ -96,7 +99,7 @@ namespace PD_ScriptTemplate.Helpers
             }
             newStructure.SegmentVolume = structureToCopy.Margin(margin);
             Logger.LogInfo(string.Format(
-                   "Creating the structure '{0}' volume={1}cc from the structure '{2}' volume={3}cc with the margin of {4}mm",
+                   "...Creating the structure '{0}' volume={1}cc from the structure '{2}' volume={3}cc with the margin of {4}mm",
                    newStructure.Id, Math.Round(newStructure.Volume, 2),
                    structureToCopy.Id, Math.Round(structureToCopy.Volume, 2),
                    margin));

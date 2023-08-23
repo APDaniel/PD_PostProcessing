@@ -83,6 +83,7 @@ namespace PD_ScriptTemplate.Views
                 UpdateCameraRotation(mousePos, lastMousePos);
 
                 lastMousePos = mousePos;
+
             }
             if (isMouseCaptured ==true&& e.RightButton == MouseButtonState.Pressed)
             {
@@ -98,7 +99,7 @@ namespace PD_ScriptTemplate.Views
         /// </summary>
         private void UpdateCameraRotation(Point currentMousePos, Point lastMousePos)
         {
-            
+
             double width = Viewport3D.ActualWidth;
             double height = Viewport3D.ActualHeight;
 
@@ -239,11 +240,11 @@ namespace PD_ScriptTemplate.Views
             lookDirection *= zoomFactor;
 
             var fallbackValue = mainCamera.Position;
-            if (fallbackValue.X <= 5 && fallbackValue.Y <= 5 && fallbackValue.Z <= 5) fallbackValue = new Point3D(5, 5, 5);
+            if (fallbackValue.X <= 2 && fallbackValue.Y <= 2 && fallbackValue.Z <= 2) fallbackValue = new Point3D(2, 2, 2);
             mainCamera.Position = mainCamera.Position + (lookDirectionLength - lookDirection.Length) * lookDirection;
             
             //Limit maximumm and miinimum zoom
-            if (mainCamera.Position.X<=5&& mainCamera.Position.Y <= 5&& mainCamera.Position.Z <= 5) 
+            if (mainCamera.Position.X<=2&& mainCamera.Position.Y <= 2&& mainCamera.Position.Z <= 2) 
             {
                 mainCamera.Position = fallbackValue;
             }

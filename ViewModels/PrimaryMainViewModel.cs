@@ -956,7 +956,6 @@ namespace PD_ScriptTemplate.ViewModels
                                     _structureToSave.SegmentVolume = _structureToManipulate1operational1.Or(_structureToManipulate1operational2);
                                     _structureToSave.SegmentVolume = _structureToSave.Margin(margin);
                                     Logger.LogInfo("...........................................................");
-                                    Logger.LogInfo("..........................SUCCESS..........................");
                                     Logger.LogInfo(string.Format
                                         ("Structure: {0} volume={1}cc has been created as a combination of " +
                                         "the structure: {2} volume={3}cc " +
@@ -966,7 +965,6 @@ namespace PD_ScriptTemplate.ViewModels
                                         _structureToManipulate2.Id, Math.Round(_structureToManipulate2.Volume, 2),
                                         margin.ToString()
                                         ));
-                                    Logger.LogInfo("...........................................................");
                                     Logger.LogInfo("...........................................................");
 
                                 } 
@@ -992,14 +990,12 @@ namespace PD_ScriptTemplate.ViewModels
                                 { 
                                     _structureToSave.SegmentVolume = _structureToManipulate1operational1.Margin(margin);
                                     Logger.LogInfo("...........................................................");
-                                    Logger.LogInfo("..........................SUCCESS..........................");
                                     Logger.LogInfo(string.Format(
                                 "PRV has been created as a structure: {0} volume={1}cc by expanding the structure: {2} volume={3}cc with the margin={4}mm",
                                 _structureToSave.Id, Math.Round(_structureToSave.Volume,2),
                                 _structureToManipulate1.Id, Math.Round(_structureToManipulate1.Volume,2),
                                 margin.ToString()
                                 ));
-                                    Logger.LogInfo("...........................................................");
                                     Logger.LogInfo("...........................................................");
                                 }
 
@@ -1023,7 +1019,6 @@ namespace PD_ScriptTemplate.ViewModels
                                     _structureToManipulate1operational2.SegmentVolume = _structureToManipulate1operational2.Margin(margin);
                                     _structureToSave.SegmentVolume = _structureToManipulate1operational1.Sub(_structureToManipulate1operational2);
                                     Logger.LogInfo("...........................................................");
-                                    Logger.LogInfo("..........................SUCCESS..........................");
                                     Logger.LogInfo(string.Format("Structure: {0} volume={1}cc has been created by " +
                                         "substracting the structure {2} volume={3}cc with the margin={4}mm from the structure: {5} volume={6}mm",
                                         _structureToSave.Id, Math.Round(_structureToSave.Volume,2),
@@ -1032,7 +1027,6 @@ namespace PD_ScriptTemplate.ViewModels
                                         _structureToManipulate1.Id, Math.Round(_structureToManipulate1.Volume,2)
 
                            ));
-                                    Logger.LogInfo("...........................................................");
                                     Logger.LogInfo("...........................................................");
                                 }
                                 catch (Exception exception)
@@ -1056,7 +1050,6 @@ namespace PD_ScriptTemplate.ViewModels
                                     _structureToSave.SegmentVolume = _structureToManipulate1operational1.And(_structureToManipulate1operational2);
                                     _structureToSave.SegmentVolume = _structureToSave.Margin(0);
                                     Logger.LogInfo("...........................................................");
-                                    Logger.LogInfo("..........................SUCCESS..........................");
                                     Logger.LogInfo(string.Format("Structure: {0} volume={1}cc has been created by " +
                                         "combining the structure {2} volume={3}cc with the structure: {4} volume={5}mm with the margin={6}mm",
                                         _structureToSave.Id, Math.Round(_structureToSave.Volume, 2),
@@ -1064,7 +1057,6 @@ namespace PD_ScriptTemplate.ViewModels
                                         _structureToManipulate2.Id, Math.Round(_structureToManipulate2.Volume, 2),
                                         margin.ToString()
                            ));
-                                    Logger.LogInfo("...........................................................");
                                     Logger.LogInfo("...........................................................");
                                 }
                                 catch (Exception exception)
@@ -1089,7 +1081,6 @@ namespace PD_ScriptTemplate.ViewModels
                                     _structureToSave.SegmentVolume = _structureToManipulate1operational1.Xor(_structureToManipulate1operational2);
                                     _structureToSave.SegmentVolume = _structureToSave.Margin(margin);
                                     Logger.LogInfo("...........................................................");
-                                    Logger.LogInfo("..........................SUCCESS..........................");
                                     Logger.LogInfo(string.Format("Structure: {0} volume={1}cc has been created by " +
                                         "substracting the intersection of the structure {2} volume={3}cc with the structure: {4} volume={5}mm with the margin={6}mm",
                                         _structureToSave.Id, Math.Round(_structureToSave.Volume, 2),
@@ -1097,7 +1088,6 @@ namespace PD_ScriptTemplate.ViewModels
                                         _structureToManipulate2.Id, Math.Round(_structureToManipulate2.Volume, 2),
                                         margin.ToString()
                            ));
-                                    Logger.LogInfo("...........................................................");
                                     Logger.LogInfo("...........................................................");
                                 }
                                 catch (Exception exception)
@@ -1122,14 +1112,12 @@ namespace PD_ScriptTemplate.ViewModels
                                     _structureToManipulate1operational1.SegmentVolume = _structureToManipulate1operational1.Margin(margin2);
                                     _structureToSave.SegmentVolume = _structureToSave.Sub(_structureToManipulate1operational1);
                                     Logger.LogInfo("...........................................................");
-                                    Logger.LogInfo("..........................SUCCESS..........................");
                                     Logger.LogInfo(string.Format("Structure: {0} volume={1}cc has been created by " +
                                         "creating a ring from the structure {2} volume={3}cc with the margin={4}mm and inner margin={5}mm",
                                         _structureToSave.Id, Math.Round(_structureToSave.Volume, 2),
                                         _structureToManipulate1.Id, Math.Round(_structureToManipulate1.Volume, 2),
                                         margin.ToString(), margin2.ToString()
                                         ));
-                                    Logger.LogInfo("...........................................................");
                                     Logger.LogInfo("...........................................................");
                                 }
                                 catch (Exception exception)

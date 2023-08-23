@@ -300,7 +300,6 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
-        
     </UserControl.Resources>
     <Grid Background="#d9d9d9">
         <Grid.ColumnDefinitions>
@@ -369,17 +368,17 @@
                 <ModelVisual3D x:Name="structure3Dmodel" Content="{Binding structure3DmodelToShow, Mode=OneWay}"/>
                 <ModelVisual3D x:Name="slider3Dmodel" Content="{Binding slider3Dmodel, Mode=OneWay}"/>
                 <ModelVisual3D x:Name="slider3Dmodel2" Content="{Binding slider3Dmodel2, Mode=OneWay}"/>
-                <helix:ArrowVisual3D Point1="{Binding point1ForArrows}" Point2="{Binding point2ForXarrow}" Diameter="7">
+                <helix:ArrowVisual3D Point1="{Binding point1ForArrows}" Point2="{Binding point2ForXarrow}" Diameter="3">
                     <helix:ArrowVisual3D.Material>
                         <DiffuseMaterial Brush="Red"/>
                     </helix:ArrowVisual3D.Material>
                 </helix:ArrowVisual3D>
-                <helix:ArrowVisual3D Point1="{Binding point1ForArrows}" Point2="{Binding point2ForYarrow}" Diameter="7">
+                <helix:ArrowVisual3D Point1="{Binding point1ForArrows}" Point2="{Binding point2ForYarrow}" Diameter="3">
                     <helix:ArrowVisual3D.Material>
                         <DiffuseMaterial Brush="blue"/>
                     </helix:ArrowVisual3D.Material>
                 </helix:ArrowVisual3D>
-                <helix:ArrowVisual3D Point1="{Binding point1ForArrows}" Point2="{Binding point2ForZarrow}" Diameter="7">
+                <helix:ArrowVisual3D Point1="{Binding point1ForArrows}" Point2="{Binding point2ForZarrow}" Diameter="3">
 
                     <helix:ArrowVisual3D.Material>
                         <DiffuseMaterial Brush="Green"/>
@@ -442,7 +441,8 @@
                        Style="{StaticResource GenericTextBlock}"
                        HorizontalAlignment="Left"
                        FontSize="20" VerticalAlignment="Center"/>
-            <TextBox Text="{Binding volumeTolerance, Mode=TwoWay}" 
+            <TextBox   x:Name="ToleranceTextBox"
+                       Text="{Binding volumeTolerance, Mode=TwoWay}" 
                        Grid.Row="3" Grid.Column="2"
                        Style="{StaticResource ToleranceTextBox}"
                        FontSize="20" HorizontalAlignment="Left"
@@ -467,11 +467,13 @@
         <Button x:Name="Duplicate3DModelButton" Content="Duplicate 3D model"
                 Grid.Column="1" Grid.Row="2" Grid.ColumnSpan="2"
                 Style="{StaticResource GenericButton}"
-                Command="{Binding duplicate3DModelCommand}"/>
-        <Button x:Name="RepairSliceButton" Content="Repair Slice"
+                Command="{Binding duplicate3DModelCommand}"
+                IsEnabled="False"/>
+        <Button x:Name="RepairSliceButton" Content="Repair Slices"
                 Grid.Column="3" Grid.Row="2"
                 Style="{StaticResource GenericButton}"
-                Command="{Binding repairSliceCommand}"/>
+                Command="{Binding repairSliceCommand}"
+                IsEnabled="{Binding volumeTolerance, Converter={StaticResource RangeToBooleanConverter}}"/>
         <Grid Name="StructureSetGrid" Grid.Row="0" Grid.Column="0"
               Style="{StaticResource GenericGrid}">
             <Grid.ColumnDefinitions>
@@ -534,7 +536,15 @@
                        HorizontalAlignment="Stretch" VerticalAlignment="Top"
                        Style="{StaticResource GenericTextBlock}" Background="Transparent"
                        Margin="0" Padding="2"
-                       FontWeight="SemiBold" FontSize="38" Foreground="#c1a0d9"/>
+                       FontWeight="SemiBold" FontSize="31" Foreground="#c1a0d9"/>
+            <TextBlock Text="{Binding spinnerPhrase1, Mode=OneWay}" 
+                       Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
+                       HorizontalAlignment="Center" VerticalAlignment="Top"
+                       TextAlignment="Center"
+                       Style="{StaticResource GenericTextBlock}" Background="Transparent"
+                       Margin="0 50 0 10" Padding="2"
+                       FontWeight="SemiBold" FontSize="25" Foreground="#c1a0d9"/>
+            
         </Grid>
     </Grid>
 </UserControl>

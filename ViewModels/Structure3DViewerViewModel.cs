@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -24,6 +25,7 @@ namespace PD_ScriptTemplate.ViewModels
         #region Private fields
         private string _volumeTolerance { get; set; } = "1";
         private string _spinnerPhrase { get; set; } = "Loading...";
+        private string _spinnerPhrase1 { get; set; } = "Initializing...";
         //Private field to make the loading spinner visible
         private bool _workIsInProgress { get; set; } = false;
         //Volume of the selected structure
@@ -93,6 +95,7 @@ namespace PD_ScriptTemplate.ViewModels
         public string volumeTolerance { get { return _volumeTolerance; } set { _volumeTolerance = value; } }
         //Used for binding with the phrase represented in the spinner grid
         public string spinnerPhrase { get { return _spinnerPhrase; } set { _spinnerPhrase = value; } }
+        public string spinnerPhrase1 { get { return _spinnerPhrase1; } set { _spinnerPhrase1 = value; } }
         //Used for binding with the spinner grid
         public bool workIsInProgress { get { return _workIsInProgress; } set { _workIsInProgress = value; } }
         //Used for binding with the UI volume data for the selected structure
@@ -363,8 +366,8 @@ namespace PD_ScriptTemplate.ViewModels
                 var _structureToGrab = _patient.StructureSets.FirstOrDefault(x => x.Id == _currentStructureSetId).Structures.FirstOrDefault(x => x.Id == _selectedStructureID);
 
                 //Define the coordinates of the geometrical center of the structure
+                //var _centerOfTheStructure = _structureToGrab.CenterPoint;
                 var _centerOfTheStructure = _structureToGrab.CenterPoint;
-
                 Logger.LogInfo(string.Format("Structure ID:{0} in the StructureSet:{1}", _selectedStructureID, _currentStructureSetId));
 
                 //Define color and geometry of the structure
@@ -507,8 +510,6 @@ namespace PD_ScriptTemplate.ViewModels
                         }
                     });
                     Logger.LogInfo(".............................................");
-                    Logger.LogInfo("...................SUCCESS...................");
-                    Logger.LogInfo(".............................................");
                 }
 
                 catch (Exception exception)
@@ -527,24 +528,24 @@ namespace PD_ScriptTemplate.ViewModels
         /// </summary>
         private async void DisplaySlider()
         {
-            Logger.LogInfo("Called a method to create a slider 3D model");
+            //Logger.LogInfo("Called a method to create a slider 3D model");
             await esapiWorker.AsyncRunStructureContext((_patient, _structureSet) =>
             {
-                Logger.LogInfo("Invoking user interface");
+                //Logger.LogInfo("Invoking user interface");
                 try
                 {
                     _userInterface.Invoke(() =>
                     {
-                        Logger.LogInfo("Setting new diffusive material for the ROI (transparent)");
+                        //Logger.LogInfo("Setting new diffusive material for the ROI (transparent)");
                         DiffuseMaterial _sliderDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(74, 67, 126)));
                         DiffuseMaterial _sliderDiffuseMaterial2 = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(74, 67, 126)));
 
-                        Logger.LogInfo("Setting new mesh geometry for the ROI");
+                        //Logger.LogInfo("Setting new mesh geometry for the ROI");
                         MeshGeometry3D _sliderMesh = new MeshGeometry3D();
                         MeshGeometry3D _sliderMesh2 = new MeshGeometry3D();
 
 
-                        Logger.LogInfo("Adding mesh positions");
+                        //Logger.LogInfo("Adding mesh positions");
 
                         _sliderMesh.Positions.Add(new Point3D(_minimumSliderXposition, _minimumSliderYposition, _sliderZposition + _numberOfROISlices));
                         _sliderMesh.Positions.Add(new Point3D(_maximumSliderXposition, _minimumSliderYposition, _sliderZposition + _numberOfROISlices));
@@ -556,7 +557,7 @@ namespace PD_ScriptTemplate.ViewModels
                         _sliderMesh2.Positions.Add(new Point3D(_maximumSliderXposition, _maximumSliderYposition, _sliderZposition - _numberOfROISlices));
                         _sliderMesh2.Positions.Add(new Point3D(_minimumSliderXposition, _maximumSliderYposition, _sliderZposition - _numberOfROISlices));
 
-                        Logger.LogInfo("Adding triangle indices");
+                        //Logger.LogInfo("Adding triangle indices");
                         _sliderMesh.TriangleIndices.Add(0);
                         _sliderMesh.TriangleIndices.Add(1);
                         _sliderMesh.TriangleIndices.Add(2);
@@ -572,7 +573,7 @@ namespace PD_ScriptTemplate.ViewModels
                         _sliderMesh2.TriangleIndices.Add(3);
 
 
-                        Logger.LogInfo("Assigning defined geometry and diffusive material to rhe ROI 3D model");
+                        //Logger.LogInfo("Assigning defined geometry and diffusive material to rhe ROI 3D model");
                         _slider3Dmodel = new GeometryModel3D(_sliderMesh, _sliderDiffuseMaterial);
                         _slider3Dmodel2 = new GeometryModel3D(_sliderMesh2, _sliderDiffuseMaterial2);
                     });
@@ -595,12 +596,16 @@ namespace PD_ScriptTemplate.ViewModels
         {
             await esapiWorker.AsyncRunStructureContext((_patient, _structureSet) =>
             {
+                Logger.LogInfo("..............................................................");
                 Logger.LogInfo("Called a method to repair the defined region for the structure");
-                _spinnerPhrase = "Repairing slices in the region of interest...";
+                Logger.LogInfo("..............................................................");
+                _spinnerPhrase ="Repairing slices in the region of interest:";
                 _workIsInProgress = true;
                 try
                 {
                     #region Enable modifications and create technical structures
+                    _spinnerPhrase1 = string.Format($"Reading patient '{_patient.Id}' data and enabling modifications...");
+                    Thread.Sleep(2000);
                     //Enable modifications for the selected patient
                     Logger.LogInfo(string.Format("Enabling modifications for the patient:{0}", _patient.Id));
                     _patient.BeginModifications();
@@ -624,8 +629,8 @@ namespace PD_ScriptTemplate.ViewModels
                     //Create two placeholder structures: one for storing slices that desired to be unchanged.
                     //The other one is to define the volume that requires corrections.
                     Logger.LogInfo(string.Format("Creating placeholder structures"));
-                    Structure _structureToCorrect = _selectedStructureSet.AddStructure("CONTROL", StructureUniqueIdHelper.CheckIfTheStructureIDisUnique("PDtoDel", _selectedStructureSet));
-                    Structure _structureCorrected = _selectedStructureSet.AddStructure("CONTROL", StructureUniqueIdHelper.CheckIfTheStructureIDisUnique("PDtoDel", _selectedStructureSet));
+                    Structure _structureToCorrect = _selectedStructureSet.AddStructure("CONTROL", StructureUniqueIdHelper.CheckIfTheStructureIDisUnique("PDtoCorrect", _selectedStructureSet));
+                    Structure _structureCorrected = _selectedStructureSet.AddStructure("CONTROL", StructureUniqueIdHelper.CheckIfTheStructureIDisUnique("PDCorrected", _selectedStructureSet));
                     Logger.LogInfo(string.Format(
                         "Created two structures: '{0}' for storing unchanged slices, and '{1}' for estimation of volume that requires corrections",
                         _structureCorrected.Id, _structureToCorrect.Id));
@@ -638,6 +643,8 @@ namespace PD_ScriptTemplate.ViewModels
                         _structureToCorrect.Id, Math.Round(_structureToCorrect.Volume,2), _selectedStructureSet.Id));
                     #endregion
                     #region Find the last and the first slices of the ROI making calculations from its bounds
+                    _spinnerPhrase1 = string.Format($"Defining slices to correct for the structure: '{_selectedStructure.Id}'...");
+                    Thread.Sleep(2000);
                     int _sliceSlider1 =0;
                     int _sliceSlider2=0;
                     int _boundZ1 = 0;
@@ -662,10 +669,14 @@ namespace PD_ScriptTemplate.ViewModels
                     /// as when we add a contour, it is automatically added in default resolution.
                     /// In order to prevent unwanted loss of volume for structures, we will try to avoid AddContourOnImagePlane() further as well
                     /// </summary>
+                    _spinnerPhrase1 = string.Format($"Saving structure volume outside of the ROI to correct...");
+                    Thread.Sleep(2000);
                     //Define the physical volume for the region of interest
 
                     //Define the first and the last plane of the structure
+                    Logger.LogInfo(string.Format(".........................................................."));
                     Logger.LogInfo(string.Format("Defining the first and the last slice of the structure:'{0}'", _selectedStructureID));
+                    Logger.LogInfo(string.Format(".........................................................."));
                     var _firstPlaneForTheStructure = Convert.ToInt32((_point1ForArrows.Z + Math.Abs(_originZ)) / _sliceCTresolution - 1);
                     var _lastPlaneForTheStructure = Convert.ToInt32((_point2ForZarrow.Z + Math.Abs(_originZ)) / _sliceCTresolution + 1);
 
@@ -684,8 +695,20 @@ namespace PD_ScriptTemplate.ViewModels
                     Logger.LogInfo(string.Format("Deleting excessive slices for:'{0}' volume={1}",
                         _structureToCorrect.Id, Math.Round(_structureToCorrect.Volume, 2)));
 
+                    //Check if the slider is positioned within the structure. If not, assign the slice before the last slice to the slider positions
+                    if (_sliceSlider2 <= _firstPlaneForTheStructure || _sliceSlider1 >= _lastPlaneForTheStructure)
+                    {
+                        if (_sliceSlider2 <= _firstPlaneForTheStructure)
+                        { _sliceSlider2 = _firstPlaneForTheStructure ; }
+                        
+
+                        if (_sliceSlider1 >= _lastPlaneForTheStructure)
+                        { _sliceSlider1 = _lastPlaneForTheStructure; }
+                            
+                    }
+
                     //Clear all slices outside of the ROI for the structure we will be correcting
-                    for (int i = _firstPlaneForTheStructure; i < _lastPlaneForTheStructure; i++)
+                        for (int i = _firstPlaneForTheStructure; i < _lastPlaneForTheStructure; i++)
                     {
                         if (i < _sliceSlider2 + 1 || i > _sliceSlider1 - 1)
                         {
@@ -705,110 +728,109 @@ namespace PD_ScriptTemplate.ViewModels
                         _structureCorrected.Id, Math.Round(_structureCorrected.Volume, 2)));
                     #endregion
                     #region Define volume for the larger, last slice and first slice of the ROI
+                    Logger.LogInfo(string.Format("..........................................................."));
+                    Logger.LogInfo(string.Format("......Entering the region of slices volume evaluation......"));
+                    Logger.LogInfo(string.Format("..........................................................."));
+                    _spinnerPhrase1 = string.Format($"Calculating reference slices...");
                     //Find the larger slice in the ROI
-                    Structure _largerSlice = _selectedStructureSet.AddStructure("CONTROL", StructureUniqueIdHelper.CheckIfTheStructureIDisUnique("PDtoDel", _selectedStructureSet));
+                    Structure _largerSliceROI = _selectedStructureSet.AddStructure("CONTROL", StructureUniqueIdHelper.CheckIfTheStructureIDisUnique("PDlargerSlice", _selectedStructureSet));
 
                     //Define initial volume of the larger slice
                     int _planeOfTheLargerSlice = 0;
-                    _largerSlice.SegmentVolume = StructureCopyHelper.CopyStructureWithUniformMargin(_largerSlice, _structureToCorrect, 0);
+                    _largerSliceROI.SegmentVolume = StructureCopyHelper.CopyStructureWithUniformMargin(_largerSliceROI, _structureToCorrect, 0);
                     for (int i = _firstPlaneForTheStructure; i < _lastPlaneForTheStructure; i++)
                     {
-                        if (i != _sliceSlider2 + 1) _largerSlice.ClearAllContoursOnImagePlane(i);
+                        if (i != _sliceSlider2) _largerSliceROI.ClearAllContoursOnImagePlane(i);
                     }
 
-                    //Compare volume slice by slice the selected slices in the ROI and define volumes of the first slice and the lasat slice
-                    Structure _firstSlice = _selectedStructureSet.AddStructure("CONTROL", StructureUniqueIdHelper.CheckIfTheStructureIDisUnique("PDtoDel", _selectedStructureSet));
+                    //Compare volume slice by slice for the selected slices in the ROI and define volumes of the first slice and the lasat slices
+                    Structure _firstSliceROI = _selectedStructureSet.AddStructure("CONTROL", StructureUniqueIdHelper.CheckIfTheStructureIDisUnique("PDfirstSlice", _selectedStructureSet));
+                    
                     for (int i = _sliceSlider2; i < _sliceSlider1; i++)
                     {
-                        _firstSlice.SegmentVolume = StructureCopyHelper.CopyStructureWithUniformMargin(_firstSlice, _structureToCorrect, 0);
+                        _firstSliceROI.SegmentVolume = StructureCopyHelper.CopyStructureWithUniformMargin(_firstSliceROI, _structureToCorrect, 0);
 
                         for (int i2 = _sliceSlider2; i2 < _sliceSlider1; i2++)
                         {
-                            if (i2 != i) { try { _firstSlice.ClearAllContoursOnImagePlane(i2); } catch { } }
+                            if (i2 != i) { try { _firstSliceROI.ClearAllContoursOnImagePlane(i2); } catch { } }
                         }
-
-                        if (_firstSlice.Volume > _largerSlice.Volume)
-                        { _largerSlice.SegmentVolume = StructureCopyHelper.CopyStructureWithUniformMargin(_largerSlice, _firstSlice, 0); _planeOfTheLargerSlice = i; }
+                        if (_firstSliceROI.Volume > _largerSliceROI.Volume)
+                        { 
+                            _largerSliceROI.SegmentVolume = StructureCopyHelper.CopyStructureWithUniformMargin(_largerSliceROI, _firstSliceROI, 0); 
+                            _planeOfTheLargerSlice = i; 
+                        }
                     }
-                    Structure _lastSlice = _selectedStructureSet.AddStructure("CONTROL", StructureUniqueIdHelper.CheckIfTheStructureIDisUnique("PDtoDel", _selectedStructureSet));
-                    _lastSlice.SegmentVolume = StructureCopyHelper.CopyStructureWithUniformMargin(_lastSlice, _structureToCorrect, 0);
+                    Structure _lastSliceROI = _selectedStructureSet.AddStructure("CONTROL", StructureUniqueIdHelper.CheckIfTheStructureIDisUnique("PDlastSlice", _selectedStructureSet));
+                    _lastSliceROI.SegmentVolume = StructureCopyHelper.CopyStructureWithUniformMargin(_lastSliceROI, _structureToCorrect, 0);
                     for (int i =_sliceSlider1; i > _sliceSlider2; i--)
                     {
-                        if(Math.Abs(i)!= Math.Abs(_sliceSlider2) +1) try { _lastSlice.ClearAllContoursOnImagePlane(i); } catch { }
+                        if(Math.Abs(i)!= Math.Abs(_sliceSlider2)+1) try { _lastSliceROI.ClearAllContoursOnImagePlane(i); } catch { }
                     }
                     #endregion
                     #region Smoothing logic
-                    Structure test = _selectedStructureSet.AddStructure("CONTROL", StructureUniqueIdHelper.CheckIfTheStructureIDisUnique("TEST", _selectedStructureSet));
-                    test.SegmentVolume = StructureCopyHelper.CopyStructureWithUniformMargin(test, _largerSlice, 0);
-                    test.SegmentVolume = test.Or(_firstSlice);
-                    test.SegmentVolume = test.Or(_lastSlice);
+                    Logger.LogInfo("..............................................");
+                    Logger.LogInfo("....Entering the region of smoothing logic....");
+                    Logger.LogInfo("..............................................");
+                    _spinnerPhrase1 = string.Format($"Initializing smoothing alghoritm...");
+                    Thread.Sleep(2000);
+                    Structure _volumeOfInterest = _selectedStructureSet.AddStructure("CONTROL", StructureUniqueIdHelper.CheckIfTheStructureIDisUnique("PD_VOI", _selectedStructureSet));
+                    _volumeOfInterest.SegmentVolume = StructureCopyHelper.CopyStructureWithUniformMargin(_volumeOfInterest, _largerSliceROI, 0);
+                    _volumeOfInterest.SegmentVolume = _volumeOfInterest.Or(_firstSliceROI);
+                    _volumeOfInterest.SegmentVolume = _volumeOfInterest.Or(_lastSliceROI);
 
                     #region Create slices in between slices: the first slice, the last slice and the larger slice
                     //Define volume difference and margin required for the smoothed slices
                     Structure checkSliceVolume = _selectedStructureSet.AddStructure(
-                        "CONTROL", StructureUniqueIdHelper.CheckIfTheStructureIDisUnique("PDtoDel",_selectedStructureSet));
+                        "CONTROL", StructureUniqueIdHelper.CheckIfTheStructureIDisUnique("PDcheckSlVol",_selectedStructureSet));
+
+
+                    _spinnerPhrase1 = string.Format($"Defining expansion margins...");
                     //For the first slice:
-                    checkSliceVolume.SegmentVolume = StructureCopyHelper.CopyStructureWithUniformMargin(checkSliceVolume, _firstSlice, 0);
+                    checkSliceVolume.SegmentVolume = StructureCopyHelper.CopyStructureWithUniformMargin(checkSliceVolume, _firstSliceROI, 0);
                     int marginForTheFirstSlice = 1;
-                    for (int i=0;i<999;i++) 
-                    {
-                        checkSliceVolume.SegmentVolume = StructureCopyHelper.CopyStructureWithMargin(
-                            checkSliceVolume, 
-                            checkSliceVolume,
-                            StructureMarginGeometry.Outer,1, 1,0,1,1,0);
-
-                        marginForTheFirstSlice = marginForTheFirstSlice + i;
-
-                        var checkVolume = _largerSlice.Volume / checkSliceVolume.Volume;
-
-                        if (checkVolume > 0.9 && checkVolume < 1.1) break;
-                    }
+                    marginForTheFirstSlice = ExpansionMargin(checkSliceVolume, _largerSliceROI, 0.1);
+                    
 
                     //For the last slice:
-                    checkSliceVolume.SegmentVolume = StructureCopyHelper.CopyStructureWithUniformMargin(checkSliceVolume, _lastSlice, 0);
+                    checkSliceVolume.SegmentVolume = StructureCopyHelper.CopyStructureWithUniformMargin(checkSliceVolume, _lastSliceROI, 0);
                     int marginForTheLastSlice = 1;
-                    for (int i = 0; i < 999; i++)
-                    {
-                        checkSliceVolume.SegmentVolume = StructureCopyHelper.CopyStructureWithMargin(
-                            checkSliceVolume,
-                            checkSliceVolume,
-                            StructureMarginGeometry.Outer, 1, 1, 0, 1, 1, 0);
+                    marginForTheLastSlice = ExpansionMargin(checkSliceVolume, _largerSliceROI, 0.1);
 
-                        marginForTheLastSlice = marginForTheLastSlice + i;
-                        var volumeOfLargerSlice = _largerSlice.Volume;
-                        var checkVolume = _largerSlice.Volume / checkSliceVolume.Volume;
-
-                        if (checkVolume > 0.9 && checkVolume < 1.1) break;
-                    }
+                    //Delete the technical structure from the structure set
                     _selectedStructureSet.RemoveStructure(checkSliceVolume);
 
-
-                    int j1 = -1;
-                    var overallNumberOfSlices = _sliceSlider1 - _sliceSlider2;
-                    for (int i= _sliceSlider2; i< _sliceSlider1; i++) 
+                    Structure bottomToTop = _selectedStructureSet.AddStructure("CONTROL", StructureUniqueIdHelper.CheckIfTheStructureIDisUnique("PDbotToTop", _selectedStructureSet));
+                    Structure largerSliceToTop = _selectedStructureSet.AddStructure("CONTROL", StructureUniqueIdHelper.CheckIfTheStructureIDisUnique("PDlargToTop", _selectedStructureSet));
+                    int j1 = 0;
+                    
+                    for (int i= _sliceSlider2; i <= _sliceSlider1; i++) 
                     {
                         int j = i - _sliceSlider2;
                         
                         var imageZresolution = _selectedStructureSet.Image.ZRes;
-                        Structure bottomToTop = _selectedStructureSet.AddStructure("CONTROL", StructureUniqueIdHelper.CheckIfTheStructureIDisUnique("PDtoDel", _selectedStructureSet));
-                        Structure largerSliceToBottom = _selectedStructureSet.AddStructure("CONTROL", StructureUniqueIdHelper.CheckIfTheStructureIDisUnique("PDtoDel", _selectedStructureSet));
-
-                        if (i < _planeOfTheLargerSlice)
+                        
+                        bottomToTop.SegmentVolume = StructureCopyHelper.CopyStructureWithUniformMargin(bottomToTop, _largerSliceROI, 0);
+                        largerSliceToTop.SegmentVolume = StructureCopyHelper.CopyStructureWithUniformMargin(largerSliceToTop, _largerSliceROI, 0);
+                        
+                        if (i < _planeOfTheLargerSlice+1)
                         {
-                            bottomToTop.SegmentVolume = StructureCopyHelper.CopyStructureWithUniformMargin(bottomToTop, _lastSlice, 0);
-                            var centerPointsDifferenceToApplyX = -j * ((bottomToTop.CenterPoint.x - _largerSlice.CenterPoint.x) / (_planeOfTheLargerSlice - _sliceSlider2));
-                            var centerPointsDifferenceToApplyY = -j * ((bottomToTop.CenterPoint.y - _largerSlice.CenterPoint.y) / (_planeOfTheLargerSlice - _sliceSlider2));
-
+                            _spinnerPhrase1 = string.Format($"Generating slices INF from the larger slice...");
+                            var centerPointsDifferenceToApplyX = ((_planeOfTheLargerSlice - _sliceSlider2) - j) * ((_lastSliceROI.CenterPoint.x - _largerSliceROI.CenterPoint.x) / (_planeOfTheLargerSlice - _sliceSlider2));
+                            var centerPointsDifferenceToApplyY = ((_planeOfTheLargerSlice - _sliceSlider2) - j) * ((_lastSliceROI.CenterPoint.y - _largerSliceROI.CenterPoint.y) / (_planeOfTheLargerSlice - _sliceSlider2));
+                            
                             bottomToTop.SegmentVolume = MoveXYZStructure(
                                 centerPointsDifferenceToApplyX,
                                 centerPointsDifferenceToApplyY,
-                                imageZresolution + (j * imageZresolution),
+                                -((_planeOfTheLargerSlice-_sliceSlider2)-j) * imageZresolution,
                                 _selectedStructureSet,
                                 bottomToTop, bottomToTop);
 
-                            var margin = j * (marginForTheLastSlice / (_planeOfTheLargerSlice - _sliceSlider2));
-                            var margin2 = 0;
-                            var margin3 = 0;
+                            double margin = ((_planeOfTheLargerSlice - _sliceSlider2) - j) * (Convert.ToDouble(marginForTheLastSlice) / Convert.ToDouble((_planeOfTheLargerSlice - _sliceSlider2)));
+                            
+                            //margin = Math.Round(j*margin,0);
+                            double margin2 = 0;
+                            double margin3 = 0;
+
                             if (margin == 0) margin = 1;
                             if (margin > 50)
                             {
@@ -820,93 +842,159 @@ namespace PD_ScriptTemplate.ViewModels
                                     margin2 = 50;
                                 }
                             }
+                            int marginINT = Convert.ToInt32(margin);
+                            int margin2INT = Convert.ToInt32(margin2);
+                            int margin3INT = Convert.ToInt32(margin3);
 
                             bottomToTop.SegmentVolume = StructureCopyHelper.CopyStructureWithMargin(
                                 bottomToTop, bottomToTop,
-                                StructureMarginGeometry.Outer,
-                                margin, margin, 0, margin, margin, 0);
+                                StructureMarginGeometry.Inner,
+                                marginINT, marginINT, 0,
+                                marginINT, marginINT, 0);
 
                             bottomToTop.SegmentVolume = StructureCopyHelper.CopyStructureWithMargin(
                                 bottomToTop, bottomToTop,
-                                StructureMarginGeometry.Outer,
-                                margin2, margin2, 0, margin2, margin2, 0);
+                                StructureMarginGeometry.Inner,
+                                margin2INT, margin2INT, 0,
+                                margin2INT, margin2INT, 0);
 
                             bottomToTop.SegmentVolume = StructureCopyHelper.CopyStructureWithMargin(
                                 bottomToTop, bottomToTop,
-                                StructureMarginGeometry.Outer,
-                                margin3, margin3, 0, margin3, margin3, 0);
-                        }
-                        if (i > _planeOfTheLargerSlice)
-                        {
-                            j1 = j1 + 1;
-                            int j2 = j1;
-                            if (j2 == 0) j2 = 1; ;
-                            largerSliceToBottom.SegmentVolume = StructureCopyHelper.CopyStructureWithUniformMargin(largerSliceToBottom, _firstSlice, 0);
-                            var centerPointsDifferenceToApplyX = -j2 * ((largerSliceToBottom.CenterPoint.x - _largerSlice.CenterPoint.x) / (_sliceSlider1 - _planeOfTheLargerSlice));
-                            var centerPointsDifferenceToApplyY = -j2 * ((largerSliceToBottom.CenterPoint.y - _largerSlice.CenterPoint.y) / (_sliceSlider1 - _planeOfTheLargerSlice));
-
-                            largerSliceToBottom.SegmentVolume = MoveXYZStructure(
-                                centerPointsDifferenceToApplyX,
-                                centerPointsDifferenceToApplyY,
-                                -imageZresolution - (j1 * imageZresolution),
-                                _selectedStructureSet,
-                                largerSliceToBottom, largerSliceToBottom);
-
-                            var margin = j2 * (marginForTheFirstSlice / (_sliceSlider1 - _planeOfTheLargerSlice));
-                            if (margin == 0) margin = 1;
-                            var margin2 = 0;
-                            var margin3 = 0;
-                            if (margin > 50)
-                            {
-                                margin2 = margin - 50;
-                                margin = 50;
-                                if (margin2 > 50)
-                                {
-                                    margin3 = margin2 - 50;
-                                    margin2 = 50;
-                                }
-                            }
-
-                            largerSliceToBottom.SegmentVolume = StructureCopyHelper.CopyStructureWithMargin(
-                                largerSliceToBottom, largerSliceToBottom,
-                                StructureMarginGeometry.Outer,
-                                margin, margin, 0, margin, margin, 0);
+                                StructureMarginGeometry.Inner,
+                                margin3INT, margin3INT, 0,
+                                margin3INT, margin3INT, 0);
                             
                         }
+                        if (i >= _planeOfTheLargerSlice && i < _sliceSlider1-1)
+                        {
+                            _spinnerPhrase1 = string.Format($"Generating slices SUP from the larger slice...");
+                            j1 = j1+1;
 
+                            double margin = j1 * (Convert.ToDouble(marginForTheFirstSlice) / Convert.ToDouble((_sliceSlider1-_planeOfTheLargerSlice)));
+                            int marginINT = Convert.ToInt32(margin);
+                            int margin1 = 0;
+                            if (margin>50) 
+                            {
+                                margin1 = marginINT - 50;
+                                margin = 50;
+                            }
+
+                            
+                            largerSliceToTop.SegmentVolume = StructureCopyHelper.CopyStructureWithMargin(
+                                largerSliceToTop, largerSliceToTop,
+                                StructureMarginGeometry.Inner,
+                                marginINT, marginINT, 0, marginINT, marginINT, 0);
+
+                            largerSliceToTop.SegmentVolume = StructureCopyHelper.CopyStructureWithMargin(
+                                largerSliceToTop, largerSliceToTop,
+                                StructureMarginGeometry.Inner,
+                                margin1, margin1, 0, margin1, margin1, 0);
+
+                            var _xMargin = j1*((_firstSliceROI.CenterPoint.x - largerSliceToTop.CenterPoint.x) / (_planeOfTheLargerSlice - _sliceSlider1));
+                            var _yMargin = j1 * ((_firstSliceROI.CenterPoint.y - largerSliceToTop.CenterPoint.y) / (_planeOfTheLargerSlice - _sliceSlider1));
+
+                            largerSliceToTop.SegmentVolume = MoveXYZStructure(
+                                -_xMargin,
+                                -_yMargin,
+                                j1 * imageZresolution,
+                                _selectedStructureSet,
+                                largerSliceToTop, largerSliceToTop);
+
+                        }
 
                         var testBottomVolume = bottomToTop.Volume;
-                        var testUpperolume = largerSliceToBottom.Volume;
-
-                        test.SegmentVolume = test.Or(bottomToTop);
-                        test.SegmentVolume = test.Or(largerSliceToBottom);
-                        var testVolumeTest = test.Volume;
-                        _selectedStructureSet.RemoveStructure(bottomToTop);
-                        _selectedStructureSet.RemoveStructure(largerSliceToBottom);
+                        var testUpperolume = largerSliceToTop.Volume;
+                        _volumeOfInterest.SegmentVolume = _volumeOfInterest.Or(bottomToTop);
+                        _volumeOfInterest.SegmentVolume = _volumeOfInterest.Or(largerSliceToTop);
+                        var testVolumeTest = _volumeOfInterest.Volume;
+                        
                     }
+                    _selectedStructureSet.RemoveStructure(bottomToTop);
+                    _selectedStructureSet.RemoveStructure(largerSliceToTop);
 
-
-
-                    
-                    Logger.LogInfo(string.Format("Volume of the larger slice in the ROI defined as: {0}cc", Math.Round(_largerSlice.Volume,2)));
-
-
-
+                    Logger.LogInfo(string.Format("Volume of the larger slice in the ROI defined as: {0}cc", Math.Round(_largerSliceROI.Volume,2)));
                     #endregion
                     //Define structure to save ID
                     var newStructureId = _selectedStructure.Id;
                     if (newStructureId.ToLower().Contains("_auto")==false) newStructureId = newStructureId + "_auto";
 
                     _structureCorrected.Id = StructureUniqueIdHelper.CheckIfTheStructureIDisUnique(newStructureId, _selectedStructureSet);
-                    if (_structureCorrected.IsHighResolution == true) test.ConvertToHighResolution();
-                    _structureCorrected.SegmentVolume = _structureCorrected.Or(test);
-                    //Get rid of a junk structures
-                    _selectedStructureSet.RemoveStructure(test);
-                    _selectedStructureSet.RemoveStructure(_lastSlice);
-                    _selectedStructureSet.RemoveStructure(_structureToCorrect);
-                    _selectedStructureSet.RemoveStructure(_firstSlice);
-                    _selectedStructureSet.RemoveStructure(_largerSlice);
+                    if (_structureCorrected.IsHighResolution == true) _volumeOfInterest.ConvertToHighResolution();
+                    _structureCorrected.SegmentVolume = _structureCorrected.Or(_volumeOfInterest);
+
+                    #region Check Volume
+                    _spinnerPhrase1 = string.Format($"Verifying volume discrepancies...");
+                    //Check if the Volume is withing the tolerance. 
+                    //If the volume is larger, delete slices starting from the top.
+                    //If the Volume is less, expand slice by slice starting from the next to the larger slice.
+                    Logger.LogInfo("..................................................");
+                    Logger.LogInfo(string.Format($"Checking if the volume of the structure {_structureCorrected.Id} is not exceeding the volume tolerance {_volumeTolerance}% " +
+                        $"compared to the structure: {_selectedStructure.Id}"));
+                    var volumeDifference = (1-_structureCorrected.Volume / _selectedStructure.Volume)*100;
+                    Logger.LogInfo(string.Format($"Volume difference is {Math.Round(Math.Abs(volumeDifference),2)}%"));
+                    Structure _sliceToManipulate = _selectedStructureSet.AddStructure("CONTROL", StructureUniqueIdHelper.CheckIfTheStructureIDisUnique("sliceToDel", _selectedStructureSet));
+                    
+                    
+                    if (volumeDifference < Convert.ToDouble(_volumeTolerance)) 
+                    {
+                        for (int i = 0; i < _lastPlaneForTheStructure-_firstPlaneForTheStructure; i++)
+                        {
+                            _sliceToManipulate.SegmentVolume = StructureCopyHelper.CopyStructureWithUniformMargin(_sliceToManipulate, _structureCorrected, 0);
+                            for (int j = _lastPlaneForTheStructure; j >= _firstPlaneForTheStructure; j--)
+                            {
+                                if (j != _lastPlaneForTheStructure - i)
+                                    try { _sliceToManipulate.ClearAllContoursOnImagePlane(j); } catch { }
+                            }
+                            _structureCorrected.SegmentVolume = _structureCorrected.Sub(_sliceToManipulate.AsymmetricMargin(new AxisAlignedMargins(StructureMarginGeometry.Outer, 1, 1, 0, 1, 1, 0)));
+                            volumeDifference = (1 - _structureCorrected.Volume / _selectedStructure.Volume) * 100;
+                            if (volumeDifference > Convert.ToDouble(_volumeTolerance))
+                                break;
+                        }
+                        
+                    }
+                    if (volumeDifference > 0)
+                    {
+                        for (int expansionIterator = 0; expansionIterator < 51; expansionIterator++)
+                        {
+                            for (int i = _planeOfTheLargerSlice + 1; i < _lastPlaneForTheStructure; i++)
+                            {
+                                _sliceToManipulate.SegmentVolume = StructureCopyHelper.CopyStructureWithUniformMargin(_sliceToManipulate, _structureCorrected, 0);
+                                for (int j = _lastPlaneForTheStructure; j >= _firstPlaneForTheStructure; j--)
+                                {
+                                    if (j != i)
+                                        try { _sliceToManipulate.ClearAllContoursOnImagePlane(j); } catch { }
+                                }
+                                _sliceToManipulate.SegmentVolume = StructureCopyHelper.CopyStructureWithMargin(_sliceToManipulate, _sliceToManipulate, StructureMarginGeometry.Outer, 1, 1, 0, 1, 1, 0);
+                                _structureCorrected.SegmentVolume = _structureCorrected.Or(_sliceToManipulate);
+
+                                volumeDifference = (1 - _structureCorrected.Volume / _selectedStructure.Volume) * 100;
+
+                                if (volumeDifference < 0)
+                                    break;
+                            }
+                            if (volumeDifference < 0)
+                                break;
+                        }
+                    }
+                    _selectedStructureSet.RemoveStructure(_sliceToManipulate);
                     #endregion
+
+                    //Get rid of junk structures
+                    _selectedStructureSet.RemoveStructure(_volumeOfInterest);
+                    _selectedStructureSet.RemoveStructure(_lastSliceROI);
+                    _selectedStructureSet.RemoveStructure(_structureToCorrect);
+                    _selectedStructureSet.RemoveStructure(_firstSliceROI);
+                    _selectedStructureSet.RemoveStructure(_largerSliceROI);
+
+                    #endregion
+                    Logger.LogInfo(string.Format($"Smoothed structure: '{_structureCorrected.Id}' with volume: {Math.Round(_structureCorrected.Volume, 2)}cc has been created " +
+                        $"from the structure: '{_selectedStructure.Id}' with volume: {Math.Round(_selectedStructure.Volume, 2)}cc"));
+                    Logger.LogInfo(string.Format($"............................................."));
+                    _spinnerPhrase = "Done!";
+                    _spinnerPhrase1 = string.Format($"Please, check contors for the structure: '{_structureCorrected.Id}' manually.");
+                    Thread.Sleep(5000);
+                    _spinnerPhrase = ("");
+                    _spinnerPhrase1 = ("");
                 }
 
                 catch (Exception exception)
@@ -920,16 +1008,25 @@ namespace PD_ScriptTemplate.ViewModels
             GetAllStructureIDsFromStructureSet();
             CreateStructures3DModels();
         }
+        
+       
+        private void Exit()
+        {
+            Logger.LogInfo("....Called a command to shut down the script.....");
+            Script.mainWindow?.Close();
+        }
+        #endregion
+        #region Public methods
         /// <summary>
-        /// This method movet a structure only in X,Y plane
+        /// This method moves a structure in X,Y,Z planes
         /// </summary>
-        public SegmentVolume MoveXYZStructure(double x, double y,double z, StructureSet structureSet, Structure structureToMove, Structure structureToSave)
+        public SegmentVolume MoveXYZStructure(double x, double y, double z, StructureSet structureSet, Structure structureToMove, Structure structureToSave)
         {
             //Fields used for reporting in the logger
             var initialVolume = Math.Round(structureToMove.Volume, 2);
             var initialCenterPoint = structureToMove.CenterPoint;
             var displacement = new VVector(x, y, z);
-
+            Logger.LogInfo("..................................................");
             Logger.LogInfo(string.Format(
                 $"Called a method to move " +
                 $"the structure: '{structureToMove.Id}' " +
@@ -937,10 +1034,10 @@ namespace PD_ScriptTemplate.ViewModels
                 $"x={Math.Round(displacement.x, 2)}, " +
                 $"y={Math.Round(displacement.y, 2)}, " +
                 $"z={Math.Round(displacement.z, 2)}"));
+            Logger.LogInfo("..................................................");
+            var segmentVolumeToReturn = structureToSave.SegmentVolume = new ESAPIvectorsHelper(displacement, structureToMove, structureSet).MoveStructure();
 
-            var segmentVolumeToReturn=structureToSave.SegmentVolume = new ESAPIvectorsHelper(displacement, structureToMove, structureSet).MoveStructure();
-
-
+            Logger.LogInfo("..................................................");
             Logger.LogInfo(string.Format($"The structure '{structureToMove.Id}' moved from " +
                 $"the coordinate: " +
                 $"x={Math.Round(initialCenterPoint.x, 2)}," +
@@ -952,15 +1049,52 @@ namespace PD_ScriptTemplate.ViewModels
                 $"y={Math.Round(structureToMove.CenterPoint.y, 2)}," +
                 $"z={Math.Round(structureToMove.CenterPoint.z, 2)} " +
                 $"(new structure volume={Math.Round(structureToMove.Volume, 2)}) " +
-                $"with a displacement x={Math.Round(displacement.x, 2)}, y={Math.Round(displacement.y, 2)} "));
-
+                $"with a displacement x={Math.Round(displacement.x, 2)}, y={Math.Round(displacement.y, 2)}, z={Math.Round(displacement.z, 2)} "));
+            Logger.LogInfo("..................................................");
             return segmentVolumeToReturn;
         }
-
-        private void Exit()
+        /// <summary>
+        /// This method helps to estimate an expansion margin (in mm) required for a slice to obtaint a volume of a larger slice with a pre-defined uncertanty
+        /// </summary>
+        /// <param name="checkSliceVolume">Slice for which we perform estimation</param>
+        /// <param name="largerSlice">Reference slice</param>
+        /// <param name="uncertainty">Forgiveness in %</param>
+        /// <returns>Margin as int. Be aware that in ESAPI it is necessary to handle margins>50 separately</returns>
+        public int ExpansionMargin(Structure checkSliceVolume, Structure largerSlice, double uncertaintyPercent)
         {
-            Logger.LogInfo("....Called a command to shut down the script.....");
-            Script.mainWindow?.Close();
+            Logger.LogInfo("............................................................................");
+            Logger.LogInfo(string.Format($"Called a method to estimate a margin required for an expansion of the slice saved in the structure {checkSliceVolume.Id} " +
+                $"to obtain a volume comparable to the volume of the slice saved in the structure {largerSlice} with the uncertainty of {uncertaintyPercent} %"));
+            Logger.LogInfo("............................................................................");
+            int margin = 1;
+            double uncertainty = uncertaintyPercent / 100;
+            for (int i = 1; i < 999; i++)
+            {
+                checkSliceVolume.SegmentVolume = StructureCopyHelper.CopyStructureWithMargin(
+                    checkSliceVolume,
+                    checkSliceVolume,
+                    StructureMarginGeometry.Outer, 1, 1, 0, 1, 1, 0);
+                if (checkSliceVolume.IsHighResolution == false)
+                    try { checkSliceVolume.ConvertToHighResolution(); } catch { }
+
+                margin = i;
+
+                var checkVolume = largerSlice.Volume / checkSliceVolume.Volume;
+
+                if (checkVolume < (1 + uncertainty))
+                    break;
+                if(checkVolume < (1 - uncertainty)) 
+                {
+                    Logger.LogInfo(string.Format($"The difference between slices is below allowed uncertainty and equal to {Math.Round(checkVolume,2)}. Required margin is saved as {margin} mm"));
+                    break;
+                }
+
+
+            }
+            Logger.LogInfo(string.Format("...................................."));
+            Logger.LogInfo(string.Format($"The margin is estimated as {margin} mm"));
+            Logger.LogInfo(string.Format("...................................."));
+            return margin;
         }
         #endregion
     }

@@ -81,13 +81,24 @@ namespace PD_ScriptTemplate.Helpers
 
             if (_checkIfStructureIdUnique != null)
             {
-                structureToSaveID = structureToSaveID + " ";
+                structureToSaveID = structureToSaveID + "_";
                 Logger.LogInfo("...The structure ID is not unique, correcting");
                 for (int i = 1; i < 99; i++)
                 {
-                    if (0 < i && i < 10) structureToSaveID = structureToSaveID.Substring(0, structureToSaveID.Length-1) + i.ToString();
+                    if (0 < i && i < 10) 
+                    {
+                        if (char.IsDigit(structureToSaveID[structureToSaveID.Length - 2])) structureToSaveID=structureToSaveID.Remove(structureToSaveID.Length - 2);
+                        if (char.IsDigit(structureToSaveID[structureToSaveID.Length - 1])) structureToSaveID=structureToSaveID.Remove(structureToSaveID.Length - 1);
+                        structureToSaveID = structureToSaveID + i.ToString();
+                    }
+                    
                     if (i > 9 && structureToSaveID.Length < 2) structureToSaveID = structureToSaveID.Substring(0, structureToSaveID.Length) + i.ToString();
-                    if ( i > 9&& structureToSaveID.Length > 1) structureToSaveID = structureToSaveID.Substring(0, structureToSaveID.Length - 1) + i.ToString();
+                    if (i > 9 && structureToSaveID.Length > 1)
+                    {
+                        if (char.IsDigit(structureToSaveID[structureToSaveID.Length - 2])) structureToSaveID=structureToSaveID.Remove(structureToSaveID.Length - 2);
+                        if (char.IsDigit(structureToSaveID[structureToSaveID.Length - 1])) structureToSaveID=structureToSaveID.Remove(structureToSaveID.Length - 1);
+                        structureToSaveID = structureToSaveID + i.ToString();
+                    }
                     var check = structureSetToCheck.Structures.FirstOrDefault(x => x.Id.ToLower() == structureToSaveID.ToLower());
                     if (check == null) break;
                 }
